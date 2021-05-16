@@ -14,9 +14,10 @@
 
 int main() {
     const size_t N = 64;
-    GPUImage image(N);
+    grain::GPUImage image(N);
 
-    Grain::test_image(image.data(), N);
+    image.fill((0xff<<24) + (0xff<<8));
+    image.fill(10, 10, 16, 16, (0xff<<24) + (0xff<<16));
     cuda_assert(cudaDeviceSynchronize());
 
     assert(stbi_write_png("out.png", N, N, 4, image.data(), sizeof(unsigned int)*N) != 0);
