@@ -3,17 +3,17 @@
 #include "gpu_image.h"
 
 namespace grain {
-__global__ void gpu_fill(unsigned int *buf, size_t n,
-                         unsigned int val) {
+__global__ void gpu_fill(uint32_t *buf, size_t n,
+                         uint32_t val) {
     auto x = blockIdx.x * blockDim.x + threadIdx.x;
     auto y = blockIdx.y * blockDim.y + threadIdx.y;
     auto idx = x + y * n;
     buf[idx] = val;
 }
-__global__ void gpu_fill_block(unsigned int *buf, size_t n,
+__global__ void gpu_fill_block(uint32_t *buf, size_t n,
                                size_t row, size_t col,
                                size_t n_rows, size_t n_cols,
-                               unsigned int val) {
+                               uint32_t val) {
     auto x = blockIdx.x * blockDim.x + threadIdx.x;
     auto y = blockIdx.y * blockDim.y + threadIdx.y;
     if(x >= row && x < row + n_rows && y >= col && y < col + n_cols) {
@@ -22,7 +22,7 @@ __global__ void gpu_fill_block(unsigned int *buf, size_t n,
     }
 }
 
-void GPUImage::fill(unsigned int val) {
+void GPUImage::fill(uint32_t val) {
     assert(m_N%16 == 0);
 
     dim3 threadsPerBlock(16, 16);
@@ -32,7 +32,7 @@ void GPUImage::fill(unsigned int val) {
     cuda_assert(cudaPeekAtLastError());
 }
 
-void GPUImage::fill(size_t row, size_t col, size_t n_rows, size_t n_cols, unsigned int val) {
+void GPUImage::fill(size_t row, size_t col, size_t n_rows, size_t n_cols, uint32_t val) {
     assert(m_N%16 == 0);
 
     //todo yes this is very inefficient. its just to add colors to debug stuff. maybe should

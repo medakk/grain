@@ -6,7 +6,7 @@ namespace grain {
 class GPUImage {
 public:
     GPUImage(size_t N) : m_N(N) {
-        cuda_assert(cudaMallocManaged(&m_image, N * N * sizeof(unsigned int)));
+        cuda_assert(cudaMallocManaged(&m_image, N * N * sizeof(uint32_t)));
     }
 
     ~GPUImage() {
@@ -15,14 +15,14 @@ public:
 
     ///////////////////
     // getters
-    unsigned int *data() { return m_image; }
+    uint32_t *data() { return m_image; }
     size_t width() const { return m_N; }
     size_t height() const { return m_N; }
 
     ///////////////////
     // image operations
-    void fill(unsigned int val);
-    void fill(size_t row, size_t col, size_t n_rows, size_t n_cols, unsigned int val);
+    void fill(uint32_t val);
+    void fill(size_t row, size_t col, size_t n_rows, size_t n_cols, uint32_t val);
 
     ///////////////////
     // sync GPU ops
@@ -37,7 +37,7 @@ public:
     GPUImage &operator=(const GPUImage &&) = delete;
 
 private:
-    unsigned int *m_image;
+    uint32_t *m_image;
     size_t m_N;
 };
 }

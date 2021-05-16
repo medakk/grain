@@ -20,7 +20,7 @@ int main() {
     image.fill(10, 10, 16, 16, (0xff<<24) + (0xff<<16));
     image.sync();
 
-    assert(stbi_write_png("out.png", N, N, 4, image.data(), sizeof(unsigned int)*N) != 0);
+    assert(stbi_write_png("out.png", N, N, 4, image.data(), sizeof(uint32_t)*N) != 0);
 
     return 0;
 }
