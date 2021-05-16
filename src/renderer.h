@@ -18,8 +18,10 @@ public:
             throw std::runtime_error("Unable to open window");
         }
 
+        size_t frame = 0;
+
         do {
-            const uint32_t *buffer = compute_buffer_func();
+            const uint32_t *buffer = compute_buffer_func(frame++);
             const int state = mfb_update_ex(window, (void *) buffer, m_width, m_height);
 
             if (state < 0) {
@@ -32,9 +34,9 @@ public:
     //////////////////////////////////
     // Disable copying and assignment
     MiniFBRenderer(const MiniFBRenderer &) = delete;
-    MiniFBRenderer(const MiniFBRenderer &&) = delete;
     MiniFBRenderer &operator=(const MiniFBRenderer &) = delete;
-    MiniFBRenderer &operator=(const MiniFBRenderer &&) = delete;
+    MiniFBRenderer(MiniFBRenderer &&) = delete;
+    MiniFBRenderer &operator=(MiniFBRenderer &&) = delete;
 
 private:
     size_t m_width, m_height;

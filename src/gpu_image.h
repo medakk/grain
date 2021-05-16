@@ -10,7 +10,7 @@ public:
     }
 
     ~GPUImage() {
-        cuda_assert(cudaFree(m_image));
+        free_image();
     }
 
     ///////////////////
@@ -24,6 +24,8 @@ public:
     void fill(uint32_t val);
     void fill(size_t row, size_t col, size_t n_rows, size_t n_cols, uint32_t val);
 
+    void write_png(const std::string& filename);
+
     ///////////////////
     // sync GPU ops
     void sync() {
@@ -33,12 +35,34 @@ public:
     //////////////////////////////////
     // Disable copying and assignment
     GPUImage(const GPUImage &) = delete;
-    GPUImage(const GPUImage &&) = delete;
     GPUImage &operator=(const GPUImage &) = delete;
-    GPUImage &operator=(const GPUImage &&) = delete;
+
+    // Move c'tor/assignment
+    GPUImage(GPUImage &&other) {
+        m_image = other.m_image;
+        m_N = other.m_N;
+
+        // make sure `other` has no more references to this GPU buffer
+        other.m_image = nullptr;
+    }
+
+    GPUImage &operator=(GPUImage &&other) {
+        free_image();
+        m_image = other.m_image;
+        m_N = other.m_N;
+
+        other.m_image = nullptr;
+        return *this;
+    }
 
 private:
     uint32_t *m_image;
     size_t m_N;
+
+    void free_image() {
+        if(m_image != nullptr) {
+            cuda_assert(cudaFree(m_image));
+        }
+    }
 };
 }

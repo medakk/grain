@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 template<class IteratorType>
 void print_arr(IteratorType it, IteratorType end, char end_ch='\n') {

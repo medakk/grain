@@ -1,29 +1,24 @@
-#include <cassert>
-#include <cuda.h>
 #include <cuda_runtime.h>
 
 #include "gpu_image.h"
 #include "renderer.h"
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#include "grain.h"
 
 int main() {
     const size_t N = 256;
-    grain::GPUImage image(N);
 
-    int x = 0;
+    std::vector<grain::GPUImage> frames;
+    frames.emplace_back(N);
+    frames.emplace_back(N);
+
+    frames[0].fill(grain::GrainType::BLANK);
+    frames[1].fill(grain::GrainType::SAND);
+    std::for_each(frames.begin(), frames.end(), [](auto& f){ f.sync(); });
+
     grain::MiniFBRenderer renderer(N, N);
-    renderer.start([&]() {
-        x = rand() % (N - 50);
-        image.fill((0xff<<24) + (0xff<<8));
-        image.fill(x, 10, 16, 16, (0xff<<24) + (0xff<<16));
-        image.sync();
-
-        return image.data();
+    renderer.start([&](size_t frame_counter) {
+        return frames[frame_counter % 2].data();
     });
-
-    assert(stbi_write_png("out.png", N, N, 4, image.data(), sizeof(uint32_t)*N) != 0);
 
     return 0;
 }
