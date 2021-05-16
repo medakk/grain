@@ -7,36 +7,19 @@
 
 #include "grain.h"
 #include "util.h"
+#include "gpu_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 int main() {
-    const size_t N = 20;
-    float *a{nullptr};
-    float *b{nullptr};
-    float *c{nullptr};
+    const size_t N = 64;
+    GPUImage image(N);
 
-    cudaMallocManaged(&a, N*sizeof(float));
-    cudaMallocManaged(&b, N*sizeof(float));
-    cudaMallocManaged(&c, N*sizeof(float));
+    Grain::test_image(image.data(), N);
+    cuda_assert(cudaDeviceSynchronize());
 
-    assert(a != nullptr);
-    assert(b != nullptr);
-    assert(c != nullptr);
-
-    std::iota(a, &a[N], 1.0f);
-    std::iota(b, &b[N], 10.0f);
-
-    Grain::add(a, b, c, N);
-
-    std::cout << "a: ";
-    print_arr(a, &a[N]);
-    std::cout << "b: ";
-    print_arr(b, &b[N]);
-    std::cout << "c: ";
-    print_arr(c, &c[N]);
-
-    cudaFree(a);
-    cudaFree(b);
-    cudaFree(c);
+    assert(stbi_write_png("out.png", N, N, 4, image.data(), sizeof(unsigned int)*N) != 0);
 
     return 0;
 }
