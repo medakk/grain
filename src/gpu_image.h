@@ -30,6 +30,7 @@ public:
         cuda_assert(cudaDeviceSynchronize());
     }
 
+    //////////////////////////////////
     // Disable copying and assignment
     GPUImage(const GPUImage &) = delete;
     GPUImage(const GPUImage &&) = delete;
