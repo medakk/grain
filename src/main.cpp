@@ -13,7 +13,7 @@
 #include "stb_image_write.h"
 
 int main() {
-    const size_t N = 64;
+    const size_t N = 256;
     grain::GPUImage image(N);
 
     image.fill((0xff<<24) + (0xff<<8));
