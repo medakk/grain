@@ -24,6 +24,12 @@ public:
     void fill(unsigned int val);
     void fill(size_t row, size_t col, size_t n_rows, size_t n_cols, unsigned int val);
 
+    ///////////////////
+    // sync GPU ops
+    void sync() {
+        cuda_assert(cudaDeviceSynchronize());
+    }
+
     // Disable copying and assignment
     GPUImage(const GPUImage &) = delete;
     GPUImage(const GPUImage &&) = delete;

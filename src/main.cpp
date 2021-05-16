@@ -18,7 +18,7 @@ int main() {
 
     image.fill((0xff<<24) + (0xff<<8));
     image.fill(10, 10, 16, 16, (0xff<<24) + (0xff<<16));
-    cuda_assert(cudaDeviceSynchronize());
+    image.sync();
 
     assert(stbi_write_png("out.png", N, N, 4, image.data(), sizeof(unsigned int)*N) != 0);
 
