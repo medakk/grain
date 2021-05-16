@@ -3,11 +3,9 @@
 #include <cstdio>
 
 #define cuda_assert(ans) { cuda_assert_((ans), __FILE__, __LINE__); }
-inline void cuda_assert_(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess)
-   {
-      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+inline void cuda_assert_(cudaError_t code, const char *file, int line, bool abort=true) {
+   if(code != cudaSuccess) {
+      fprintf(stderr,"cuda_assert: %s %s %d\n", cudaGetErrorString(code), file, line);
       if (abort) exit(code);
    }
 }
