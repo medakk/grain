@@ -16,6 +16,7 @@ public:
     ///////////////////
     // getters
     uint32_t *data() { return m_image; }
+    const uint32_t *data() const { return m_image; }
     size_t width() const { return m_N; }
     size_t height() const { return m_N; }
 

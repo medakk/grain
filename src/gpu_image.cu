@@ -7,8 +7,10 @@ __global__ void gpu_fill(uint32_t *buf, size_t n,
                          uint32_t val) {
     auto x = blockIdx.x * blockDim.x + threadIdx.x;
     auto y = blockIdx.y * blockDim.y + threadIdx.y;
-    auto idx = x + y * n;
-    buf[idx] = val;
+    if(x < n && y < n) {
+        auto idx = x + y * n;
+        buf[idx] = val;
+    }
 }
 __global__ void gpu_fill_block(uint32_t *buf, size_t n,
                                size_t row, size_t col,
