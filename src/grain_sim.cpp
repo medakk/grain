@@ -25,7 +25,11 @@ const uint32_t* GrainSim::update(size_t frame_counter, EventData& event_data) {
 
     // handle mouse events
     if(event_data.mouse_pressed) {
-        std::cout << "mouse: " << event_data.mouse_x << " " << event_data.mouse_y << "\n";
+        // std::cout << "mouse: " << event_data.mouse_x << " " << event_data.mouse_y << "\n";
+        const size_t x = event_data.mouse_x * (m_N - 1);
+        const size_t y = event_data.mouse_y * (m_N - 1);
+        const size_t sz = 15;
+        sprinkle(image1, GrainType::Sand, x, y, sz);
     }
 
     image1.sync();

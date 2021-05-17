@@ -43,6 +43,19 @@ __global__ void gpu_step(const uint32_t* in, uint32_t* out, size_t n) {
     }
 }
 
+__global__ void gpu_sprinkle(uint32_t *out, size_t n, uint32_t value,
+                             size_t start_x, size_t start_y, size_t sz) {
+    auto x = start_x + blockIdx.x * blockDim.x + threadIdx.x;
+    auto y = start_y + blockIdx.y * blockDim.y + threadIdx.y;
+    if(x < start_x + sz && y < start_y + sz) {
+        auto idx = x + y * n;
+        // todo use curand
+        if(x % 2 == 0 && y % 2 == 0) {
+            out[idx] = value;
+        }
+    }
+}
+
 void GrainSim::step(const GPUImage& in, GPUImage& out) {
     assert(m_N%16 == 0);
 
@@ -51,5 +64,17 @@ void GrainSim::step(const GPUImage& in, GPUImage& out) {
     gpu_step<<<numBlocks, threadsPerBlock>>>(in.data(), out.data(), m_N);
 
     cuda_assert(cudaPeekAtLastError());
+}
+
+void GrainSim::sprinkle(grain::GPUImage &image, uint32_t value,
+                        size_t x, size_t y, size_t sz) {
+    dim3 threadsPerBlock(16, 16);
+    dim3 numBlocks((sz + 16 - 1)/16, (sz + 16 - 1)/16);
+    //todo assumes width == height
+    gpu_sprinkle<<<numBlocks, threadsPerBlock>>>(image.data(), image.width(), value,
+                                                 x, y, sz);
+
+    cuda_assert(cudaPeekAtLastError());
+
 }
 }
