@@ -6,8 +6,8 @@
 #include "grain_sim.h"
 
 void init_sim(grain::GPUImage& image) {
-    image.fill(grain::GrainType::BLANK);
-    image.fill(20, 20, 20, 20, grain::GrainType::SAND);
+    image.fill(grain::GrainType::Blank);
+    image.fill(20, 20, 20, 20, grain::GrainType::Sand);
     image.sync();
 }
 
@@ -25,15 +25,19 @@ int main() {
     init_sim(images[0]);
 
     // create renderer and start update loop
-    grain::MiniFBRenderer renderer(N, N);
-    renderer.start([&](size_t frame_counter) {
+    grain::MiniFBRenderer::start([&](size_t frame_counter, bool shouldReset) {
         const auto& image0 = images[frame_counter % 2];
         auto& image1 = images[(frame_counter+1) % 2];
-        grain::GrainSim::step(image0, image1, N);
-        image1.sync();
+
+        if(shouldReset) {
+            init_sim(image1);
+        } else {
+            grain::GrainSim::step(image0, image1, N);
+            image1.sync();
+        }
 
         return image1.data();
-    });
+    }, N, N);
 
     return 0;
 }
