@@ -1,8 +1,10 @@
 #pragma once
 
+#include "grain_types.h"
 #include <MiniFB.h>
 
 namespace grain {
+
 class MiniFBRenderer {
 public:
     template<typename F>
@@ -12,17 +14,24 @@ public:
         if(!window) {
             throw std::runtime_error("Unable to open window");
         }
-        mfb_set_keyboard_callback(window, minifb_keyboard_callback);
+        mfb_set_keyboard_callback(window, keyboard_callback);
+        mfb_set_mouse_button_callback(window, mouse_button_callback);
 
         size_t frame = 0;
-        bool shouldReset = false;
-        mfb_set_user_data(window, &shouldReset);
+        EventData event_data;
+        mfb_set_user_data(window, &event_data);
 
         do {
-            const uint32_t *buffer = compute_buffer_func(frame++, shouldReset);
-            if(shouldReset) {
-                shouldReset = false;
-            }
+            // figure out mouse location
+            const int mouse_x = mfb_get_mouse_x(window);
+            const int mouse_y = mfb_get_mouse_y(window);
+            event_data.mouse_x = (float)mouse_x / (float)mfb_get_window_width(window);
+            event_data.mouse_y = (float)mouse_y / (float)mfb_get_window_height(window);
+            event_data.mouse_x = std::clamp(event_data.mouse_x, 0.0f, 1.0f);
+            event_data.mouse_y = std::clamp(event_data.mouse_y, 0.0f, 1.0f);
+
+            const uint32_t *buffer = compute_buffer_func(frame++, event_data);
+
             const int state = mfb_update_ex(window, (void *) buffer, width, height);
             if (state < 0) {
                 window = NULL;
@@ -39,15 +48,25 @@ public:
     MiniFBRenderer &operator=(MiniFBRenderer &&) = delete;
 
 private:
-    static void minifb_keyboard_callback(mfb_window *window, mfb_key key,
+    static void keyboard_callback(mfb_window *window, mfb_key key,
                                          mfb_key_mod mod, bool isPressed) {
         if (key == KB_KEY_ESCAPE) {
             mfb_close(window);
         }
         if(key == KB_KEY_R && isPressed) {
-            bool& shouldReset = *((bool*)mfb_get_user_data(window));
-            shouldReset = true;
+            EventData& event_data = *((EventData*) mfb_get_user_data(window));
+            event_data.should_reset = true;
         }
+    }
+
+    static void mouse_button_callback(struct mfb_window *window, mfb_mouse_button button,
+                                      mfb_key_mod mod, bool isPressed) {
+        if (button != MOUSE_BTN_1) {
+            return;
+        }
+
+        EventData& event_data = *((EventData*) mfb_get_user_data(window));
+        event_data.mouse_pressed = isPressed;
     }
 };
 }
