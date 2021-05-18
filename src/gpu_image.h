@@ -35,9 +35,29 @@ public:
     }
 
     //////////////////////////////////
-    // Disable copying and assignment
+    // Copy c'tor/assignment
     GPUImage(const GPUImage &) = delete;
-    GPUImage &operator=(const GPUImage &) = delete;
+    GPUImage &operator=(const GPUImage &other) {
+        if(this == &other) {
+            return *this;
+        }
+
+        if(m_image == other.m_image) {
+            return *this;
+        }
+
+        if(m_N != other.m_N) {
+            free_image();
+            m_N = other.m_N;
+            cuda_assert(cudaMallocManaged(&m_image, m_N * m_N * sizeof(uint32_t)));
+        }
+
+        cuda_assert(cudaMemcpy(m_image, other.m_image,
+                               m_N * m_N * sizeof(uint32_t), cudaMemcpyKind::cudaMemcpyDefault));
+        cuda_assert(cudaDeviceSynchronize());
+
+        return *this;
+    }
 
     // Move c'tor/assignment
     GPUImage(GPUImage &&other) {

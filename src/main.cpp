@@ -1,21 +1,57 @@
 #include <cuda_runtime.h>
+#include "cxxopts.hpp"
 
 #include "renderer.h"
 #include "grain_types.h"
 #include "grain_sim.h"
 
-int main() {
-    // world size
-    const size_t N = 256;
+struct Options {
+    size_t N{256};
+    bool start_paused{false};
+};
 
-    grain::GrainSim grain_sim(N);
+Options parse_args(int argc, char *argv[]) {
+    cxxopts::Options options("grain", "GPU accelerated falling sand simulation");
+    options.add_options()
+            ("n,world-size", "size of world",
+                    cxxopts::value<int>()->default_value("256"))
+            ("p,start-paused", "start with simulation paused. <space> to resume",
+                    cxxopts::value<bool>()->default_value("false"))
+            ("h,help", "print usage");
+    const auto result = options.parse(argc, argv);
+
+    if(result.count("help")) {
+        std::cerr << options.help() << "\n";
+        exit(0);
+    }
+
+    Options ret;
+    ret.N = result["n"].as<int>();
+
+    ret.start_paused = result["start-paused"].as<bool>();
+
+    return ret;
+}
+
+int main(int argc, char *argv[]) {
+    Options options{};
+    try {
+        options = parse_args(argc, argv);
+    } catch(std::exception& e) {
+        std::cerr << "Failed to parse args: " << e.what() << "\n"
+                  << "Run " << argv[0] << " -h for usage\n";
+        exit(1);
+    }
+
+    grain::GrainSim grain_sim(options.N);
+    grain::EventData event_data;
+    event_data.is_paused = options.start_paused;
 
     // create renderer and start update loop
-    grain::MiniFBRenderer::start([&](size_t frame_counter,
-                                     grain::EventData &event_data) {
-        const uint32_t* data = grain_sim.update(frame_counter, event_data);
+    grain::MiniFBRenderer::start([&]() {
+        const uint32_t* data = grain_sim.update(event_data);
         return data;
-    }, N, N);
+    }, event_data, options.N, options.N);
 
     return 0;
 }

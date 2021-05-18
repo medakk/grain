@@ -13,19 +13,20 @@ public:
             m_images.emplace_back(m_N);
         }
 
-        init(m_images[0]);
+        init();
     }
 
-    const uint32_t* update(size_t frame_counter, EventData& event_data);
+    const uint32_t* update(EventData& event_data);
 
 private:
     size_t m_N;
     std::vector<GPUImage> m_images;
+    size_t m_frame_count{0};
 
     void step(const GPUImage& in, GPUImage& out);
+    void init();
 
     // these are generic operations. perhaps they can be moved to a different place later
-    static void init(grain::GPUImage& image);
     static void sprinkle(grain::GPUImage& image, uint32_t value,
                          size_t x, size_t y,size_t sz);
 };
