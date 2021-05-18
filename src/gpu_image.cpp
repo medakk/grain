@@ -4,9 +4,9 @@
 #include "stb_image_write.h"
 
 namespace grain {
-void GPUImage::write_png(const std::string& filename) {
+void GPUImage::write_png(const std::string& filename) const {
     if(stbi_write_png(filename.c_str(), m_N, m_N, 4,
-                      m_image, sizeof(uint32_t)*m_N) == 0) {
+                      m_image, 0) == 0) {
         throw std::runtime_error("Failed to write " + filename);
     }
 }

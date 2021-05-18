@@ -26,7 +26,7 @@ public:
     void fill(size_t row, size_t col, size_t n_rows, size_t n_cols, uint32_t val);
     size_t count(uint32_t val) const;
 
-    void write_png(const std::string& filename);
+    void write_png(const std::string& filename) const;
 
     ///////////////////
     // sync GPU ops
