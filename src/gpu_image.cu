@@ -45,7 +45,6 @@ void GPUImage::fill(uint32_t val) {
 }
 
 void GPUImage::fill(size_t row, size_t col, size_t n_rows, size_t n_cols, uint32_t val) {
-    //todo don't check the whole image lol.
     const size_t T = 16;
     dim3 threadsPerBlock(T, T);
     dim3 numBlocks((n_rows + T - 1) / T, (n_cols + T - 1) / T);
