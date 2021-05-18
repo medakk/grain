@@ -13,14 +13,14 @@ __global__ void gpu_fill(uint32_t *buf, size_t n,
     }
 }
 __global__ void gpu_fill_block(uint32_t *buf, size_t n,
-                               size_t row, size_t col,
-                               size_t n_rows, size_t n_cols,
-                               uint32_t val) {
-    auto x = blockIdx.x * blockDim.x + threadIdx.x;
-    auto y = blockIdx.y * blockDim.y + threadIdx.y;
-    if(x >= row && x < row + n_rows && y >= col && y < col + n_cols) {
+                               size_t start_x, size_t start_y,
+                               size_t w, size_t h,
+                               uint32_t value) {
+    auto x = start_x + blockIdx.x * blockDim.x + threadIdx.x;
+    auto y = start_y + blockIdx.y * blockDim.y + threadIdx.y;
+    if(x < n && y < n && x < start_x + w && y < start_y + h) {
         auto idx = x + y * n;
-        buf[idx] = val;
+        buf[idx] = value;
     }
 }
 __global__ void gpu_count(uint32_t *buf, size_t n, uint32_t val, int* out) {
@@ -36,24 +36,20 @@ __global__ void gpu_count(uint32_t *buf, size_t n, uint32_t val, int* out) {
 }
 
 void GPUImage::fill(uint32_t val) {
-    // todo don't require this
-    assert(m_N%16 == 0);
-
-    dim3 threadsPerBlock(16, 16);
-    dim3 numBlocks(m_N/16, m_N/16);
+    const size_t T = 16;
+    dim3 threadsPerBlock(T, T);
+    dim3 numBlocks((m_N + T - 1) / T, (m_N + T - 1) / T);
     gpu_fill<<<numBlocks, threadsPerBlock>>>(m_image, m_N, val);
 
     cuda_assert(cudaPeekAtLastError());
 }
 
 void GPUImage::fill(size_t row, size_t col, size_t n_rows, size_t n_cols, uint32_t val) {
-    // todo don't require this
-    assert(m_N%16 == 0);
+    //todo don't check the whole image lol.
+    const size_t T = 16;
+    dim3 threadsPerBlock(T, T);
+    dim3 numBlocks((n_rows + T - 1) / T, (n_cols + T - 1) / T);
 
-    //todo yes this is very inefficient. its just to add colors to debug stuff. maybe should
-    // just do it on CPU, its managed memory anyway. But where's the fun in that
-    dim3 threadsPerBlock(16, 16);
-    dim3 numBlocks(m_N / 16, m_N / 16);
     gpu_fill_block<<<numBlocks, threadsPerBlock>>>(m_image, m_N,
                                                    row, col, n_rows, n_cols,
                                                    val);
@@ -62,8 +58,9 @@ void GPUImage::fill(size_t row, size_t col, size_t n_rows, size_t n_cols, uint32
 }
 
 size_t GPUImage::count(uint32_t val) const {
-    dim3 threadsPerBlock(16, 16);
-    dim3 numBlocks(m_N / 16, m_N / 16);
+    const size_t T = 16;
+    dim3 threadsPerBlock(T, T);
+    dim3 numBlocks((m_N + T - 1) / T, (m_N + T - 1) / T);
 
     int* d_out;
     cuda_assert(cudaMallocManaged(&d_out, sizeof(int)));
