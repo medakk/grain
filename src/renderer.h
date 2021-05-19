@@ -48,7 +48,7 @@ public:
 
 private:
     static void keyboard_callback(mfb_window *window, mfb_key key,
-                                         mfb_key_mod mod, bool is_pressed) {
+                                  mfb_key_mod mod, bool is_pressed) {
         if (key == KB_KEY_ESCAPE) {
             mfb_close(window);
         }

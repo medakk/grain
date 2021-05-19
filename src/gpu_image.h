@@ -68,7 +68,7 @@ public:
         other.m_image = nullptr;
     }
 
-    GPUImage &operator=(GPUImage &&other) {
+    GPUImage &operator=(GPUImage &&other) noexcept {
         free_image();
         m_image = other.m_image;
         m_N = other.m_N;
