@@ -52,9 +52,13 @@ private:
         if (key == KB_KEY_ESCAPE) {
             mfb_close(window);
         }
+
         EventData& event_data = *((EventData*) mfb_get_user_data(window));
         if(key == KB_KEY_R && isPressed) {
             event_data.should_reset = true;
+        }
+        if(key == KB_KEY_S && isPressed) {
+            event_data.should_take_screenshot = true;
         }
         if(key == KB_KEY_SPACE && isPressed) {
             event_data.is_paused = !event_data.is_paused;

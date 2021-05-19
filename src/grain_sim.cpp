@@ -46,6 +46,12 @@ const uint32_t* GrainSim::update(EventData& event_data) {
     }
 
     image1.sync();
+
+    if(event_data.should_take_screenshot) {
+        image1.write_png("screenshot.png");
+        event_data.should_take_screenshot = false;
+    }
+
     return image1.data();
 }
 

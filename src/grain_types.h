@@ -19,6 +19,7 @@ struct EventData {
     bool should_reset {false};
     bool is_mouse_pressed {false};
     bool is_paused {false};
+    bool should_take_screenshot {false};
 
     float mouse_x, mouse_y;
 };
