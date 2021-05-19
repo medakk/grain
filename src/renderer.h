@@ -48,31 +48,31 @@ public:
 
 private:
     static void keyboard_callback(mfb_window *window, mfb_key key,
-                                         mfb_key_mod mod, bool isPressed) {
+                                         mfb_key_mod mod, bool is_pressed) {
         if (key == KB_KEY_ESCAPE) {
             mfb_close(window);
         }
 
         EventData& event_data = *((EventData*) mfb_get_user_data(window));
-        if(key == KB_KEY_R && isPressed) {
+        if(key == KB_KEY_R && is_pressed) {
             event_data.should_reset = true;
         }
-        if(key == KB_KEY_S && isPressed) {
+        if(key == KB_KEY_S && is_pressed) {
             event_data.should_take_screenshot = true;
         }
-        if(key == KB_KEY_SPACE && isPressed) {
+        if(key == KB_KEY_SPACE && is_pressed) {
             event_data.is_paused = !event_data.is_paused;
         }
     }
 
     static void mouse_button_callback(struct mfb_window *window, mfb_mouse_button button,
-                                      mfb_key_mod mod, bool isPressed) {
+                                      mfb_key_mod mod, bool is_pressed) {
         if (button != MOUSE_BTN_1) {
             return;
         }
 
         EventData& event_data = *((EventData*) mfb_get_user_data(window));
-        event_data.is_mouse_pressed = isPressed;
+        event_data.is_mouse_pressed = is_pressed;
     }
 };
 }
