@@ -2,8 +2,9 @@
 
 #include "grain_types.h"
 
-//TODO this file exists because I grain_types.h seems to be compiled by gcc and not nvcc.
-// this allows for these convenience methods to use __device__
+//TODO this file exists because grain_types.h seems to be compiled by gcc and not nvcc
+// this allows for these convenience methods to use __device__. should ideally be one
+// single header for grain_types(or not?)
 
 namespace grain {
 __device__ __host__ static bool is_type(uint32_t val, uint32_t type) {
