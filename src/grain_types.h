@@ -21,10 +21,12 @@ public:
 };
 
 struct EventData {
-    bool should_reset {false};
-    bool is_mouse_pressed {false};
-    bool is_paused {false};
-    bool should_take_screenshot {false};
+    bool reset {false};
+    bool mouse_pressed {false};
+    bool paused {false};
+    bool screenshot {false};
+    bool next_brush {false};
+    bool prev_brush {false};
 
     float mouse_x, mouse_y;
 };

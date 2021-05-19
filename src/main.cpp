@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
     grain::GrainSim grain_sim(options.N, options.speed);
     grain::EventData event_data;
-    event_data.is_paused = options.start_paused;
+    event_data.paused = options.start_paused;
 
     // create renderer and start update loop
     grain::MiniFBRenderer::start([&]() {

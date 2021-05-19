@@ -23,6 +23,7 @@ private:
     size_t m_speed{1};
     std::vector<GPUImage> m_images;
     size_t m_frame_count{0};
+    uint32_t m_brush_idx{0}; // index for the current user-selected brush
 
     void step(const GPUImage& in, GPUImage& out);
     void init();

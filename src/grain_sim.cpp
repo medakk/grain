@@ -19,14 +19,14 @@ const uint32_t* GrainSim::update(EventData& event_data) {
     auto& image1 = m_images[(m_frame_count+1) % 2];
 
     // check whether we should reset
-    if(event_data.should_reset) {
+    if(event_data.reset) {
         init();
         m_frame_count = 0;
-        event_data.should_reset = false;
+        event_data.reset = false;
         return image1.data();
     }
 
-    if(!event_data.is_paused) {
+    if(!event_data.paused) {
         const auto n_sand = image0.count(GrainType::Sand | (m_frame_count % 2));
         fmt::print("[F: {:7}] [sand: {:3}] \n", m_frame_count, n_sand);
 
@@ -34,7 +34,7 @@ const uint32_t* GrainSim::update(EventData& event_data) {
         step(image0, image1);
 
         // handle mouse events
-        if(event_data.is_mouse_pressed) {
+        if(event_data.mouse_pressed) {
             // std::cout << "mouse: " << event_data.mouse_x << " " << event_data.mouse_y << "\n";
             const size_t x = event_data.mouse_x * (m_N - 1);
             const size_t y = event_data.mouse_y * (m_N - 1);
@@ -47,9 +47,9 @@ const uint32_t* GrainSim::update(EventData& event_data) {
 
     image1.sync();
 
-    if(event_data.should_take_screenshot) {
+    if(event_data.screenshot) {
         image1.write_png("screenshot.png");
-        event_data.should_take_screenshot = false;
+        event_data.screenshot = false;
     }
 
     return image1.data();

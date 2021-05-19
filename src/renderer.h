@@ -55,13 +55,19 @@ private:
 
         EventData& event_data = *((EventData*) mfb_get_user_data(window));
         if(key == KB_KEY_R && is_pressed) {
-            event_data.should_reset = true;
+            event_data.reset = true;
         }
         if(key == KB_KEY_S && is_pressed) {
-            event_data.should_take_screenshot = true;
+            event_data.screenshot = true;
+        }
+        if(key == KB_KEY_E && is_pressed) {
+            event_data.next_brush = true;
+        }
+        if(key == KB_KEY_Q && is_pressed) {
+            event_data.prev_brush = true;
         }
         if(key == KB_KEY_SPACE && is_pressed) {
-            event_data.is_paused = !event_data.is_paused;
+            event_data.paused = !event_data.paused;
         }
     }
 
@@ -72,7 +78,7 @@ private:
         }
 
         EventData& event_data = *((EventData*) mfb_get_user_data(window));
-        event_data.is_mouse_pressed = is_pressed;
+        event_data.mouse_pressed = is_pressed;
     }
 };
 }
