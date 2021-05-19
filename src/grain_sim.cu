@@ -44,12 +44,30 @@ __global__ void gpu_slow_step(uint32_t *buf, size_t n, uint32_t turn) {
     }
 }
 
-__global__ void gpu_step(uint32_t* buf, size_t n, uint32_t turn) {
-    auto x = blockIdx.x * blockDim.x * 3 + threadIdx.x * 3;
-    auto y = blockIdx.y * blockDim.y * 3 + threadIdx.y * 3;
-    if(x < n && y < n) {
-        // gpu_update_cell(buf, n, turn, x, y);
-        buf[x + y * n] = GrainType::Undefined;
+__global__ void gpu_step(uint32_t* buf, size_t n, uint32_t turn, size_t bx, size_t by) {
+    auto sx = bx * 3 + blockIdx.x * blockDim.x * 6 + threadIdx.x * 6;
+    auto sy = by * 3 + blockIdx.y * blockDim.y * 6 + threadIdx.y * 6;
+    for(size_t dx=0; dx<3; dx++) {
+        for(size_t dy=0; dy<3; dy++) {
+            auto x = sx + dx;
+            auto y = sy + dy;
+            if(x < n && y < n) {
+#if 0
+                uint32_t col;
+                if(bx == 0 && by == 0) {
+                    col = GrainType::Debug0;
+                } else if(bx == 0 && by == 1) {
+                    col = GrainType::Debug1;
+                } else if(bx == 1 && by == 0) {
+                    col = GrainType::Debug2;
+                } else {
+                    col = GrainType::Debug3;
+                }
+                buf[x + y * n] = col;
+#endif
+                gpu_update_cell(buf, n, turn, x, y);
+            }
+        }
     }
 }
 
@@ -67,15 +85,21 @@ __global__ void gpu_sprinkle(uint32_t *out, size_t n, uint32_t value,
 }
 
 void GrainSim::step(const GPUImage& in, GPUImage& out) {
+    assert(m_N % 2 == 0);
+
     out = in;
 
     const size_t T = 16;
     const size_t thirds = (m_N + 3 - 1) / 3;
     dim3 threadsPerBlock(T, T);
-    dim3 numBlocks((thirds + T - 1) / T, (thirds + T - 1) / T);
+    dim3 numBlocks((thirds + 2*T - 1) / (2 * T), (thirds + 2*T - 1) / (2 * T));
 
-    // gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, m_frame_count%2);
-    gpu_slow_step<<<1, 1>>>(out.data(), m_N, m_frame_count%2);
+    gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, m_frame_count%2, 0, 0);
+    gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, m_frame_count%2, 0, 1);
+    gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, m_frame_count%2, 1, 0);
+    gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, m_frame_count%2, 1, 1);
+
+    // gpu_slow_step<<<1, 1>>>(out.data(), m_N, m_frame_count%2);
 
 
     cuda_assert(cudaPeekAtLastError());
