@@ -46,9 +46,9 @@ const uint32_t* GrainSim::update(EventData& event_data) {
         // handle mouse events
         if(event_data.mouse_pressed) {
             // std::cout << "mouse: " << event_data.mouse_x << " " << event_data.mouse_y << "\n";
-            const size_t x = event_data.mouse_x * (m_N - 1);
-            const size_t y = event_data.mouse_y * (m_N - 1);
             const size_t sz = 30;
+            const size_t x = event_data.mouse_x * (m_N - 1) - sz / 2.0;
+            const size_t y = event_data.mouse_y * (m_N - 1) - sz / 2.0;
             const auto brush = m_brushes[m_brush_idx];
             sprinkle(image1, brush, x, y, sz);
         }
