@@ -38,7 +38,7 @@ const uint32_t* GrainSim::update(EventData& event_data) {
             // std::cout << "mouse: " << event_data.mouse_x << " " << event_data.mouse_y << "\n";
             const size_t x = event_data.mouse_x * (m_N - 1);
             const size_t y = event_data.mouse_y * (m_N - 1);
-            const size_t sz = 15;
+            const size_t sz = 30;
             sprinkle(image1, GrainType::Sand, x, y, sz);
         }
 

@@ -78,29 +78,30 @@ __global__ void gpu_sprinkle(uint32_t *out, size_t n, uint32_t value,
     if(x < n && y < n && x < start_x + sz && y < start_y + sz) {
         auto idx = x + y * n;
         // todo use curand
-        if(x % 2 == 0 && y % 2 == 0) {
-            out[idx] = value;
-        }
+        out[idx] = value;
     }
 }
 
 void GrainSim::step(const GPUImage& in, GPUImage& out) {
-    assert(m_N % 2 == 0);
-
-    out = in;
+    // todo find better way to do double buffer
+    out = in; // GPU-copy from in to out
 
     const size_t T = 16;
     const size_t thirds = (m_N + 3 - 1) / 3;
     dim3 threadsPerBlock(T, T);
     dim3 numBlocks((thirds + 2*T - 1) / (2 * T), (thirds + 2*T - 1) / (2 * T));
 
-    gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, m_frame_count%2, 0, 0);
-    gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, m_frame_count%2, 0, 1);
-    gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, m_frame_count%2, 1, 0);
-    gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, m_frame_count%2, 1, 1);
+    // todo this is incorrect, we maybe wasting a full step on a noop
+    auto turn = m_frame_count % 2;
 
-    // gpu_slow_step<<<1, 1>>>(out.data(), m_N, m_frame_count%2);
-
+    for(size_t i=0; i<m_speed; i++) {
+        turn ^= 1;
+        // gpu_slow_step<<<1, 1>>>(out.data(), m_N, turn);
+        gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, turn, 0, 0);
+        gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, turn, 0, 1);
+        gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, turn, 1, 0);
+        gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, turn, 1, 1);
+    }
 
     cuda_assert(cudaPeekAtLastError());
 }

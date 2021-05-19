@@ -7,7 +7,7 @@ namespace grain{
 
 class GrainSim {
 public:
-    GrainSim(size_t N_) : m_N(N_) {
+    GrainSim(size_t N_, size_t speed_=1) : m_N(N_), m_speed(speed_) {
         // create two buffers for current state and previous state
         for(int i=0; i<2; i++) {
             m_images.emplace_back(m_N);
@@ -20,6 +20,7 @@ public:
 
 private:
     size_t m_N;
+    size_t m_speed{1};
     std::vector<GPUImage> m_images;
     size_t m_frame_count{0};
 

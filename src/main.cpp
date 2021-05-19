@@ -7,6 +7,7 @@
 
 struct Options {
     size_t N{256};
+    size_t speed{1};
     bool start_paused{false};
 };
 
@@ -15,6 +16,8 @@ Options parse_args(int argc, char *argv[]) {
     options.add_options()
             ("n,world-size", "size of world",
                     cxxopts::value<int>()->default_value("256"))
+            ("s,speed", "number of iterations to run per update",
+             cxxopts::value<int>()->default_value("1"))
             ("p,start-paused", "start with simulation paused. <space> to resume",
                     cxxopts::value<bool>()->default_value("false"))
             ("h,help", "print usage");
@@ -27,7 +30,7 @@ Options parse_args(int argc, char *argv[]) {
 
     Options ret;
     ret.N = result["n"].as<int>();
-
+    ret.speed = result["speed"].as<int>();
     ret.start_paused = result["start-paused"].as<bool>();
 
     return ret;
@@ -43,7 +46,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    grain::GrainSim grain_sim(options.N);
+    grain::GrainSim grain_sim(options.N, options.speed);
     grain::EventData event_data;
     event_data.is_paused = options.start_paused;
 
