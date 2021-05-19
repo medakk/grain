@@ -16,18 +16,39 @@ __device__ void gpu_update_cell(uint32_t* buf, size_t n, size_t turn, size_t x, 
 
         } else if (is_type(val, GrainType::Sand)) {
             if (y != n - 1) {
-                if (is_type(buf[x + (y + 1) * n], GrainType::Blank)) {
-                    val = GrainType::Blank;
+                if (is_passable(buf[x + (y + 1) * n])) {
+                    val = buf[x + (y + 1) * n] & GrainType::MASK_TYPE;
                     buf[x + (y + 1) * n] = mark_done(GrainType::Sand, turn);
                 } else if (x != 0
-                           && is_type(buf[x - 1 + (y + 1) * n], GrainType::Blank)) {
-                    val = GrainType::Blank;
+                           && is_passable(buf[x - 1 + (y + 1) * n])) {
+                    val = buf[x - 1 + (y + 1) * n];
                     buf[x - 1 + (y + 1) * n] = mark_done(GrainType::Sand, turn);
                 } else if (x != n - 1
-                           && is_type(buf[x + 1 + (y + 1) * n], GrainType::Blank)) {
-                    val = GrainType::Blank;
+                           && is_passable(buf[x + 1 + (y + 1) * n])) {
+                    val = buf[x + 1 + (y + 1) * n];
                     buf[x + 1 + (y + 1) * n] = mark_done(GrainType::Sand, turn);
                 }
+            }
+        } else if (is_type(val, GrainType::Water)) {
+            if (y != n - 1 && is_type(buf[x + (y + 1) * n], GrainType::Blank)) {
+                val = GrainType::Blank;
+                buf[x + (y + 1) * n] = mark_done(GrainType::Water, turn);
+            } else if (y != n - 1 && x != 0
+                       && is_type(buf[x - 1 + (y + 1) * n], GrainType::Blank)) {
+                val = GrainType::Blank;
+                buf[x - 1 + (y + 1) * n] = mark_done(GrainType::Water, turn);
+            } else if (y != n - 1 && x != n - 1
+                       && is_type(buf[x + 1 + (y + 1) * n], GrainType::Blank)) {
+                val = GrainType::Blank;
+                buf[x + 1 + (y + 1) * n] = mark_done(GrainType::Water, turn);
+            } else if (x != 0
+                       && is_type(buf[x - 1 + y * n], GrainType::Blank)) {
+                val = GrainType::Blank;
+                buf[x - 1 + y * n] = mark_done(GrainType::Water, turn);
+            } else if (x != n - 1
+                       && is_type(buf[x + 1 + y * n], GrainType::Blank)) {
+                val = GrainType::Blank;
+                buf[x + 1 + y * n] = mark_done(GrainType::Water, turn);
             }
         }
 
