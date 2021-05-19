@@ -29,8 +29,8 @@ public:
     void write_png(const std::string& filename) const;
 
     ///////////////////
-    // sync GPU ops
-    void sync() {
+    // sync GPU ops (todo should this be const?)
+    void sync() const {
         cuda_assert(cudaDeviceSynchronize());
     }
 
@@ -54,7 +54,7 @@ public:
 
         cuda_assert(cudaMemcpy(m_image, other.m_image,
                                m_N * m_N * sizeof(uint32_t), cudaMemcpyKind::cudaMemcpyDefault));
-        cuda_assert(cudaDeviceSynchronize());
+        sync();
 
         return *this;
     }

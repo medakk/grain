@@ -1,45 +1,55 @@
 #include <cassert>
+
+#include "gpu_grain_types.h"
+#include "grain_types.h"
 #include "grain_sim.h"
+#include <fmt/format.h>
 
 namespace grain {
-__global__ void gpu_step(const uint32_t* in, uint32_t* out, size_t n) {
-    auto x = blockIdx.x * blockDim.x + threadIdx.x;
-    auto y = blockIdx.y * blockDim.y + threadIdx.y;
-    if(x < n && y < n) {
-        auto idx = x + y * n;
-        uint32_t cell_out = GrainType::Undefined;
 
-        if(in[idx] == GrainType::Blank) {
-            auto d_blocked = y == n-1 || in[x + (y+1)*n] == GrainType::Sand;
+__device__ void gpu_update_cell(uint32_t* buf, size_t n, size_t turn, size_t x, size_t y) {
+    auto idx = x + y * n;
+    auto val = buf[idx];
+    if (!is_done(val, turn)) {
+        //todo switch-case?
+        if (is_type(val, GrainType::Blank)) {
 
-            if(y != 0 && in[x + (y-1)*n] == GrainType::Sand) {
-                cell_out = GrainType::Sand;
-            } else if (d_blocked && x != n - 1
-                       && in[x + 1 + (y - 1)*n] == GrainType::Sand
-                       && in[x + 1 + y * n] == GrainType::Sand) {
-                cell_out = GrainType::Sand;
-            } else if (d_blocked && x != 0
-                       && in[x - 1 + (y - 1) * n] == GrainType::Sand
-                       && in[x - 1 + y * n] == GrainType::Sand) {
-                cell_out = GrainType::Sand;
-            } else {
-                cell_out = GrainType::Blank;
-            }
-        } else if(in[idx] == GrainType::Sand) {
-            auto dl_blocked = x == 0 || y == n - 1 || in[x-1 + (y+1)*n] == GrainType::Sand;
-            auto dr_blocked = x == n-1 || y == n - 1 || in[x+1 + (y+1)*n] == GrainType::Sand;
-            if(y != n-1 && in[x + (y+1)*n] == GrainType::Blank) {
-                cell_out = GrainType::Blank;
-            } else if(!dl_blocked) {
-                cell_out = GrainType::Blank;
-            } else if(!dr_blocked) {
-                cell_out = GrainType::Blank;
-            } else {
-                cell_out = GrainType::Sand;
+        } else if (is_type(val, GrainType::Sand)) {
+            if (y != n - 1) {
+                if (is_type(buf[x + (y + 1) * n], GrainType::Blank)) {
+                    val = GrainType::Blank;
+                    buf[x + (y + 1) * n] = mark_done(GrainType::Sand, turn);
+                } else if (x != 0
+                           && is_type(buf[x - 1 + (y + 1) * n], GrainType::Blank)) {
+                    val = GrainType::Blank;
+                    buf[x - 1 + (y + 1) * n] = mark_done(GrainType::Sand, turn);
+                } else if (x != n - 1
+                           && is_type(buf[x + 1 + (y + 1) * n], GrainType::Blank)) {
+                    val = GrainType::Blank;
+                    buf[x + 1 + (y + 1) * n] = mark_done(GrainType::Sand, turn);
+                }
             }
         }
 
-        out[idx] = cell_out;
+        val = mark_done(val, turn);
+        buf[idx] = val;
+    }
+}
+
+__global__ void gpu_slow_step(uint32_t *buf, size_t n, uint32_t turn) {
+    for (int x = 0; x < n; x++) {
+        for (int y = 0; y < n; y++) {
+            gpu_update_cell(buf, n, turn, x, y);
+        }
+    }
+}
+
+__global__ void gpu_step(uint32_t* buf, size_t n, uint32_t turn) {
+    auto x = blockIdx.x * blockDim.x * 3 + threadIdx.x * 3;
+    auto y = blockIdx.y * blockDim.y * 3 + threadIdx.y * 3;
+    if(x < n && y < n) {
+        // gpu_update_cell(buf, n, turn, x, y);
+        buf[x + y * n] = GrainType::Undefined;
     }
 }
 
@@ -57,11 +67,16 @@ __global__ void gpu_sprinkle(uint32_t *out, size_t n, uint32_t value,
 }
 
 void GrainSim::step(const GPUImage& in, GPUImage& out) {
-    const size_t T = 16;
-    dim3 threadsPerBlock(T, T);
-    dim3 numBlocks((m_N + T - 1) / T, (m_N + T - 1) / T);
+    out = in;
 
-    gpu_step<<<numBlocks, threadsPerBlock>>>(in.data(), out.data(), m_N);
+    const size_t T = 16;
+    const size_t thirds = (m_N + 3 - 1) / 3;
+    dim3 threadsPerBlock(T, T);
+    dim3 numBlocks((thirds + T - 1) / T, (thirds + T - 1) / T);
+
+    // gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, m_frame_count%2);
+    gpu_slow_step<<<1, 1>>>(out.data(), m_N, m_frame_count%2);
+
 
     cuda_assert(cudaPeekAtLastError());
 }

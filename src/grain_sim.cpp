@@ -27,7 +27,7 @@ const uint32_t* GrainSim::update(EventData& event_data) {
     }
 
     if(!event_data.is_paused) {
-        const auto n_sand = image0.count(GrainType::Sand);
+        const auto n_sand = image0.count(GrainType::Sand | (m_frame_count % 2));
         fmt::print("[F: {:7}] [sand: {:3}] \n", m_frame_count, n_sand);
 
         // perform update
