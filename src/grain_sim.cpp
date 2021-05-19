@@ -33,13 +33,24 @@ const uint32_t* GrainSim::update(EventData& event_data) {
         // perform update
         step(image0, image1);
 
+        // brush change events
+        if(event_data.next_brush) {
+            m_brush_idx = (m_brush_idx + 1) % m_brushes.size();
+            event_data.next_brush = false;
+        }
+        if(event_data.prev_brush) {
+            m_brush_idx = (m_brush_idx + m_brushes.size() - 1) % m_brushes.size();
+            event_data.prev_brush = false;
+        }
+
         // handle mouse events
         if(event_data.mouse_pressed) {
             // std::cout << "mouse: " << event_data.mouse_x << " " << event_data.mouse_y << "\n";
             const size_t x = event_data.mouse_x * (m_N - 1);
             const size_t y = event_data.mouse_y * (m_N - 1);
             const size_t sz = 30;
-            sprinkle(image1, GrainType::Sand, x, y, sz);
+            const auto brush = m_brushes[m_brush_idx];
+            sprinkle(image1, brush, x, y, sz);
         }
 
         m_frame_count++;

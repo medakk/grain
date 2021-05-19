@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include "grain_types.h"
 #include "gpu_image.h"
 
@@ -23,7 +25,14 @@ private:
     size_t m_speed{1};
     std::vector<GPUImage> m_images;
     size_t m_frame_count{0};
-    uint32_t m_brush_idx{0}; // index for the current user-selected brush
+    size_t m_brush_idx{0}; // index for the current user-selected brush
+
+    // could be static, but that's a pain...
+    std::array<uint32_t, 3> m_brushes{
+        GrainType::Sand,
+        GrainType::Blank,
+        GrainType::Water,
+    };
 
     void step(const GPUImage& in, GPUImage& out);
     void init();
