@@ -57,7 +57,17 @@ __device__ void gpu_update_smokelike(uint32_t* buf, size_t n, size_t turn,
         val = GrainType::Blank;
     } else if(is_passable(buf[x + (y-1)*n])) {
         val = buf[x + (y - 1) * n] & GrainType::MASK_TYPE;
-        buf[x + (y - 1) * n] = mark_done(type, turn);
+
+        // todo note that we are NOT marking it is as done. this is a hack to work
+        // around this scenario:
+        //
+        // __S__
+        // __S__
+        //
+        // ^these are two smoke particles. If, in our scheduling order, we update the
+        // one on the bottom first, it'll move up, move the smoke above down, and mark
+        // both as done. the end result is a no-op
+        buf[x + (y - 1) * n] = type;
     }
 }
 

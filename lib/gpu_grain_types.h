@@ -13,7 +13,10 @@ __device__ __host__ static bool is_type(uint32_t val, uint32_t type) {
 
 __device__ __host__ static bool is_passable(uint32_t val) {
     val = val & GrainType::MASK_TYPE;
-    return val == GrainType::Blank || val == GrainType::Water || val == GrainType::Lava;
+    return val == GrainType::Blank
+           || val == GrainType::Water
+           || val == GrainType::Lava
+           || val == GrainType::Smoke;
 }
 
 __device__ __host__ static bool is_done(uint32_t val, uint32_t turn) {
