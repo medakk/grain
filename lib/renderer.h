@@ -10,6 +10,8 @@ public:
     template<typename F>
     static void start(F compute_buffer_func, EventData& event_data,
                       size_t width, size_t height) {
+        MiniFBRenderer::print_usage();
+
         // todo who frees this?
         mfb_window *window = mfb_open_ex("grain", 720, 720, WF_RESIZABLE);
         if(!window) {
@@ -47,6 +49,15 @@ public:
     MiniFBRenderer &operator=(MiniFBRenderer &&) = delete;
 
 private:
+
+    static void print_usage() {
+        std::cerr << "R:     Reset\n"
+                  << "S:     Screenshot(overwrites screenshot.png in current dir)\n"
+                  << "Q/E:   Previous/Next Brush\n"
+                  << "Space: Toggle pause\n"
+                  << "Esc:   Close\n";
+    }
+
     static void keyboard_callback(mfb_window *window, mfb_key key,
                                   mfb_key_mod mod, bool is_pressed) {
         if (key == KB_KEY_ESCAPE) {
@@ -60,11 +71,11 @@ private:
         if(key == KB_KEY_S && is_pressed) {
             event_data.screenshot = true;
         }
-        if(key == KB_KEY_E && is_pressed) {
-            event_data.next_brush = true;
-        }
         if(key == KB_KEY_Q && is_pressed) {
             event_data.prev_brush = true;
+        }
+        if(key == KB_KEY_E && is_pressed) {
+            event_data.next_brush = true;
         }
         if(key == KB_KEY_SPACE && is_pressed) {
             event_data.paused = !event_data.paused;
