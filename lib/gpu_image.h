@@ -6,7 +6,7 @@ namespace grain {
 class GPUImage {
 public:
     GPUImage(size_t N) : m_N(N) {
-        cuda_assert(cudaMallocManaged(&m_image, N * N * sizeof(uint32_t)));
+        cuda_assert(cudaMallocManaged(&m_data, N * N * sizeof(uint32_t)));
     }
 
     ~GPUImage() {
@@ -15,8 +15,8 @@ public:
 
     ///////////////////
     // getters
-    uint32_t *data() { return m_image; }
-    const uint32_t *data() const { return m_image; }
+    uint32_t *data() { return m_data; }
+    const uint32_t *data() const { return m_data; }
     size_t width() const { return m_N; }
     size_t height() const { return m_N; }
 
@@ -27,6 +27,7 @@ public:
     size_t count(uint32_t val) const;
 
     void write_png(const std::string& filename) const;
+    void read_png(const std::string& filename);
 
     ///////////////////
     // sync GPU ops (todo should this be const?)
@@ -42,17 +43,18 @@ public:
             return *this;
         }
 
-        if(m_image == other.m_image) {
+        if(m_data == other.m_data) {
+            //todo what if they are different views into the same buffer :p
             return *this;
         }
 
         if(m_N != other.m_N) {
             free_image();
             m_N = other.m_N;
-            cuda_assert(cudaMallocManaged(&m_image, m_N * m_N * sizeof(uint32_t)));
+            cuda_assert(cudaMallocManaged(&m_data, m_N * m_N * sizeof(uint32_t)));
         }
 
-        cuda_assert(cudaMemcpy(m_image, other.m_image,
+        cuda_assert(cudaMemcpy(m_data, other.m_data,
                                m_N * m_N * sizeof(uint32_t), cudaMemcpyKind::cudaMemcpyDefault));
         sync();
 
@@ -61,29 +63,38 @@ public:
 
     // Move c'tor/assignment
     GPUImage(GPUImage &&other) {
-        m_image = other.m_image;
+        m_data = other.m_data;
         m_N = other.m_N;
 
         // make sure `other` has no more references to this GPU buffer
-        other.m_image = nullptr;
+        other.m_data = nullptr;
     }
 
     GPUImage &operator=(GPUImage &&other) noexcept {
+        if(this == &other) {
+            return *this;
+        }
+
+        if(m_data == other.m_data) {
+            //todo what if they are different views into the same buffer :p
+            return *this;
+        }
+
         free_image();
-        m_image = other.m_image;
+        m_data = other.m_data;
         m_N = other.m_N;
 
-        other.m_image = nullptr;
+        other.m_data = nullptr;
         return *this;
     }
 
 private:
-    uint32_t *m_image;
+    uint32_t *m_data;
     size_t m_N;
 
     void free_image() {
-        if(m_image != nullptr) {
-            cuda_assert(cudaFree(m_image));
+        if(m_data != nullptr) {
+            cuda_assert(cudaFree(m_data));
         }
     }
 };

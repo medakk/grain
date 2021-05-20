@@ -9,7 +9,8 @@ namespace grain{
 
 class GrainSim {
 public:
-    GrainSim(size_t N_, size_t speed_=1) : m_N(N_), m_speed(speed_) {
+    GrainSim(size_t N_, size_t speed_ = 1, const std::string &init_filename_ = "")
+            : m_N(N_), m_speed(speed_), m_init_filename(init_filename_) {
         // create two buffers for current state and previous state
         for(int i=0; i<2; i++) {
             m_images.emplace_back(m_N);
@@ -27,6 +28,7 @@ private:
     std::vector<GPUImage> m_images;
     size_t m_frame_count{0};
     size_t m_brush_idx{0}; // index for the current user-selected brush
+    std::string m_init_filename{};
 
     // could be static, but that's a pain...
     std::array<uint32_t, 3> m_brushes{

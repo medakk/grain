@@ -39,7 +39,7 @@ void GPUImage::fill(uint32_t val) {
     const size_t T = 16;
     dim3 threadsPerBlock(T, T);
     dim3 numBlocks((m_N + T - 1) / T, (m_N + T - 1) / T);
-    gpu_fill<<<numBlocks, threadsPerBlock>>>(m_image, m_N, val);
+    gpu_fill<<<numBlocks, threadsPerBlock>>>(m_data, m_N, val);
 
     cuda_assert(cudaPeekAtLastError());
 }
@@ -49,7 +49,7 @@ void GPUImage::fill(size_t row, size_t col, size_t n_rows, size_t n_cols, uint32
     dim3 threadsPerBlock(T, T);
     dim3 numBlocks((n_rows + T - 1) / T, (n_cols + T - 1) / T);
 
-    gpu_fill_block<<<numBlocks, threadsPerBlock>>>(m_image, m_N,
+    gpu_fill_block<<<numBlocks, threadsPerBlock>>>(m_data, m_N,
                                                    row, col, n_rows, n_cols,
                                                    val);
 
@@ -65,7 +65,7 @@ size_t GPUImage::count(uint32_t val) const {
     cuda_assert(cudaMallocManaged(&d_out, sizeof(int)));
     *d_out = 0;
 
-    gpu_count<<<numBlocks, threadsPerBlock>>>(m_image, m_N, val, d_out);
+    gpu_count<<<numBlocks, threadsPerBlock>>>(m_data, m_N, val, d_out);
 
     cuda_assert(cudaPeekAtLastError());
     cuda_assert(cudaDeviceSynchronize());

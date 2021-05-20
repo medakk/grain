@@ -6,7 +6,13 @@ namespace grain {
 
 void GrainSim::init() {
     m_images[0].fill(grain::GrainType::Blank);
-    m_images[0].fill(20, 20, 20, 20, grain::GrainType::Sand);
+
+    if(m_init_filename.empty()) {
+        // just add a block of sand for debugging
+        m_images[0].fill(20, 20, 20, 20, grain::GrainType::Sand);
+    } else {
+        m_images[0].read_png(m_init_filename);
+    }
 
     m_images[1] = m_images[0];
 

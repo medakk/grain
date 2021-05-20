@@ -1,3 +1,5 @@
+#include <string>
+
 #include "cxxopts.hpp"
 #include "renderer.h"
 #include "grain_types.h"
@@ -7,6 +9,7 @@ struct Options {
     size_t N{256};
     size_t speed{1};
     bool start_paused{false};
+    std::string init_filename{};
 };
 
 Options parse_args(int argc, char *argv[]) {
@@ -18,6 +21,8 @@ Options parse_args(int argc, char *argv[]) {
              cxxopts::value<int>()->default_value("1"))
             ("p,start-paused", "start with simulation paused. <space> to resume",
                     cxxopts::value<bool>()->default_value("false"))
+            ("i,init-filename", "load initial state from .PNG file",
+             cxxopts::value<std::string>()->default_value(""))
             ("h,help", "print usage");
     const auto result = options.parse(argc, argv);
 
@@ -30,6 +35,7 @@ Options parse_args(int argc, char *argv[]) {
     ret.N = result["n"].as<int>();
     ret.speed = result["speed"].as<int>();
     ret.start_paused = result["start-paused"].as<bool>();
+    ret.init_filename = result["init-filename"].as<std::string>();
 
     return ret;
 }
@@ -44,7 +50,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    grain::GrainSim grain_sim(options.N, options.speed);
+    grain::GrainSim grain_sim(options.N, options.speed, options.init_filename);
     grain::EventData event_data;
     event_data.paused = options.start_paused;
 
