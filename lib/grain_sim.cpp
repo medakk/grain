@@ -14,7 +14,7 @@ void GrainSim::init() {
     m_images[1].sync();
 }
 
-const uint32_t* GrainSim::update(EventData& event_data) {
+const uint32_t* GrainSim::update(EventData& event_data, bool verbose) {
     // figure out which buffer is in vs out
     const auto &image0 = m_images[m_frame_count % 2];
     auto& image1 = m_images[(m_frame_count+1) % 2];
@@ -45,7 +45,6 @@ const uint32_t* GrainSim::update(EventData& event_data) {
 
         // handle mouse events
         if(event_data.mouse_pressed) {
-            // std::cout << "mouse: " << event_data.mouse_x << " " << event_data.mouse_y << "\n";
             const size_t sz = 30.0 * (m_N / 512.0);
             const size_t x = event_data.mouse_x * (m_N - 1) - sz / 2.0;
             const size_t y = event_data.mouse_y * (m_N - 1) - sz / 2.0;
@@ -55,9 +54,11 @@ const uint32_t* GrainSim::update(EventData& event_data) {
         image1.sync();
 
         const auto end_time = std::chrono::system_clock::now();
-        double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(
+        const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(
                 end_time - start_time).count();
-        fmt::print("[F: {:7}] [iter_time: {:.6}ms] \n", m_frame_count, elapsed_seconds*1000.0);
+        if(verbose) {
+            fmt::print("[F: {:7}] [iter_time: {:.6}ms] \n", m_frame_count, elapsed_seconds*1000.0);
+        }
         m_frame_count++;
     } else {
         image1.sync();

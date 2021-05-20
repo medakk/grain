@@ -18,7 +18,8 @@ public:
         init();
     }
 
-    const uint32_t* update(EventData& event_data);
+    const uint32_t* update(EventData& event_data, bool verbose=true);
+
 
 private:
     size_t m_N;
@@ -34,8 +35,10 @@ private:
         GrainType::Water,
     };
 
-    void step(const GPUImage& in, GPUImage& out);
+    // reset state
     void init();
+
+    void step(const GPUImage& in, GPUImage& out);
 
     // these are generic operations. perhaps they can be moved to a different place later
     static void sprinkle(grain::GPUImage& image, uint32_t value,

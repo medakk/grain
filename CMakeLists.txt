@@ -51,3 +51,16 @@ target_include_directories(grain_bin PRIVATE
 target_link_libraries(grain_bin PRIVATE
         grain_lib
         ${GRAIN_DEPS})
+
+###############################
+# Build benchmarks grain_bench
+###############################
+
+add_executable(grain_bench bench/bench.cpp)
+target_include_directories(grain_bench PRIVATE
+        "lib/" # TODO better way to expose headers.
+        "bench/")
+target_link_libraries(grain_bench PRIVATE
+        grain_lib
+        ${GRAIN_DEPS}
+        benchmark::benchmark)
