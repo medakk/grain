@@ -7,11 +7,11 @@
 // single header for grain_types(or not?)
 
 namespace grain {
-__device__ __host__ static bool is_type(uint32_t val, uint32_t type) {
+__device__ __host__ static bool is_type(grain_t val, grain_t type) {
     return (val & GrainType::MASK_TYPE) == type;
 }
 
-__device__ __host__ static bool is_passable(uint32_t val) {
+__device__ __host__ static bool is_passable(grain_t val) {
     val = val & GrainType::MASK_TYPE;
     return val == GrainType::Blank
            || val == GrainType::Water
@@ -19,12 +19,12 @@ __device__ __host__ static bool is_passable(uint32_t val) {
            || val == GrainType::Smoke;
 }
 
-__device__ __host__ static bool is_done(uint32_t val, uint32_t turn) {
+__device__ __host__ static bool is_done(grain_t val, grain_t turn) {
     return (val & GrainType::MASK_TURN) != turn;
 }
 
 [[nodiscard]]
-__device__ __host__ static uint32_t mark_done(uint32_t val, uint32_t turn) {
+__device__ __host__ static grain_t mark_done(grain_t val, grain_t turn) {
     turn ^= 1; // flips the bit
     return (val & GrainType::MASK_TYPE) | turn;
 }

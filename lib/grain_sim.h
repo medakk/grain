@@ -19,7 +19,7 @@ public:
         init();
     }
 
-    const uint32_t* update(EventData& event_data, bool verbose=true);
+    const grain_t* update(EventData& event_data, bool verbose=true);
 
 
 private:
@@ -31,7 +31,7 @@ private:
     std::string m_init_filename{};
 
     // could be static, but that's a pain...
-    std::array<uint32_t, 5> m_brushes{
+    std::array<grain_t, 5> m_brushes{
         GrainType::Blank,
         GrainType::Sand,
         GrainType::Water,
@@ -47,7 +47,7 @@ private:
     void handle_brush_events(GPUImage& image, EventData& event_data);
 
     // these are generic operations. perhaps they can be moved to a different place later
-    static void sprinkle(grain::GPUImage& image, uint32_t value,
+    static void sprinkle(grain::GPUImage& image, grain_t value,
                          size_t x, size_t y,size_t sz);
 };
 

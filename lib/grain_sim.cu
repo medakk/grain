@@ -7,8 +7,8 @@
 
 namespace grain {
 
-__device__ void gpu_update_sandlike(uint32_t* buf, size_t n, size_t turn,
-                                    int x, int y, uint32_t& val) {
+__device__ void gpu_update_sandlike(grain_t* buf, size_t n, size_t turn,
+                                    int x, int y, grain_t& val) {
     const auto type = val & GrainType::MASK_TYPE;
     if (y != n - 1) {
         if (is_passable(buf[x + (y + 1) * n])) {
@@ -26,8 +26,8 @@ __device__ void gpu_update_sandlike(uint32_t* buf, size_t n, size_t turn,
     }
 }
 
-__device__ void gpu_update_waterlike(uint32_t *buf, size_t n, size_t turn,
-                                     int x, int y, uint32_t &val) {
+__device__ void gpu_update_waterlike(grain_t *buf, size_t n, size_t turn,
+                                     int x, int y, grain_t &val) {
     const auto type = val & GrainType::MASK_TYPE;
     if (y != n - 1 && is_type(buf[x + (y + 1) * n], GrainType::Blank)) {
         val = GrainType::Blank;
@@ -50,8 +50,8 @@ __device__ void gpu_update_waterlike(uint32_t *buf, size_t n, size_t turn,
         buf[x + 1 + y * n] = mark_done(type, turn);
     }
 }
-__device__ void gpu_update_smokelike(uint32_t* buf, size_t n, size_t turn,
-                                     int x, int y, uint32_t& val) {
+__device__ void gpu_update_smokelike(grain_t* buf, size_t n, size_t turn,
+                                     int x, int y, grain_t& val) {
     const auto type = val & GrainType::MASK_TYPE;
     if(y == 0) {
         val = GrainType::Blank;
@@ -71,7 +71,7 @@ __device__ void gpu_update_smokelike(uint32_t* buf, size_t n, size_t turn,
     }
 }
 
-__device__ void gpu_update_cell(uint32_t* buf, size_t n, size_t turn, int x, int y) {
+__device__ void gpu_update_cell(grain_t* buf, size_t n, size_t turn, int x, int y) {
     auto idx = x + y * n;
     auto val = buf[idx];
     if (!is_done(val, turn)) {
@@ -109,7 +109,7 @@ __device__ void gpu_update_cell(uint32_t* buf, size_t n, size_t turn, int x, int
     }
 }
 
-__global__ void gpu_slow_step(uint32_t *buf, size_t n, uint32_t turn) {
+__global__ void gpu_slow_step(grain_t *buf, size_t n, grain_t turn) {
     for (int x = 0; x < n; x++) {
         for (int y = 0; y < n; y++) {
             gpu_update_cell(buf, n, turn, x, y);
@@ -117,7 +117,7 @@ __global__ void gpu_slow_step(uint32_t *buf, size_t n, uint32_t turn) {
     }
 }
 
-__global__ void gpu_step(uint32_t* buf, size_t n, uint32_t turn, int bx, int by) {
+__global__ void gpu_step(grain_t* buf, size_t n, grain_t turn, int bx, int by) {
     int sx = bx * 3 + blockIdx.x * blockDim.x * 6 + threadIdx.x * 6;
     int sy = by * 3 + blockIdx.y * blockDim.y * 6 + threadIdx.y * 6;
     for(int dx=0; dx<3; dx++) {
@@ -126,7 +126,7 @@ __global__ void gpu_step(uint32_t* buf, size_t n, uint32_t turn, int bx, int by)
             auto y = sy + dy;
             if(x < n && y < n) {
 #if 0
-                uint32_t col;
+                grain_t col;
                 if(bx == 0 && by == 0) {
                     col = GrainType::Debug0;
                 } else if(bx == 0 && by == 1) {
@@ -144,7 +144,7 @@ __global__ void gpu_step(uint32_t* buf, size_t n, uint32_t turn, int bx, int by)
     }
 }
 
-__global__ void gpu_sprinkle(uint32_t *out, size_t n, uint32_t value,
+__global__ void gpu_sprinkle(grain_t *out, size_t n, grain_t value,
                              size_t start_x, size_t start_y, size_t sz) {
     //todo this is very suspicious maybe some overflows but we are compensating later
     auto x = start_x - sz/2 + blockIdx.x * blockDim.x + threadIdx.x;
@@ -186,7 +186,7 @@ void GrainSim::step(const GPUImage& in, GPUImage& out) {
     cuda_assert(cudaPeekAtLastError());
 }
 
-void GrainSim::sprinkle(grain::GPUImage &image, uint32_t value,
+void GrainSim::sprinkle(grain::GPUImage &image, grain_t value,
                         size_t x, size_t y, size_t sz) {
     dim3 threadsPerBlock(16, 16);
     dim3 numBlocks((sz + 16 - 1)/16, (sz + 16 - 1)/16);

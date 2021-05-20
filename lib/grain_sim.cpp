@@ -20,7 +20,7 @@ void GrainSim::init() {
     m_images[1].sync();
 }
 
-const uint32_t* GrainSim::update(EventData& event_data, bool verbose) {
+const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
     if(!event_data.paused) {
         m_frame_count++;
     }

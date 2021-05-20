@@ -31,7 +31,7 @@ public:
             event_data.mouse_x = std::clamp(event_data.mouse_x, 0.0f, 1.0f);
             event_data.mouse_y = std::clamp(event_data.mouse_y, 0.0f, 1.0f);
 
-            const uint32_t *buffer = compute_buffer_func();
+            const grain_t *buffer = compute_buffer_func();
 
             const int state = mfb_update_ex(window, (void *) buffer, width, height);
             if (state < 0) {
