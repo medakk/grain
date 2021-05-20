@@ -3,10 +3,11 @@
 #include "util.h"
 
 namespace grain {
+template <typename T>
 class GPUImage {
 public:
     GPUImage(size_t N) : m_N(N) {
-        cuda_assert(cudaMallocManaged(&m_data, N * N * sizeof(uint32_t)));
+        cuda_assert(cudaMallocManaged(&m_data, N * N * sizeof(T)));
     }
 
     ~GPUImage() {
@@ -15,16 +16,16 @@ public:
 
     ///////////////////
     // getters
-    uint32_t *data() { return m_data; }
-    const uint32_t *data() const { return m_data; }
+    T *data() { return m_data; }
+    const T *data() const { return m_data; }
     size_t width() const { return m_N; }
     size_t height() const { return m_N; }
 
     ///////////////////
     // image operations
-    void fill(uint32_t val);
-    void fill(size_t row, size_t col, size_t n_rows, size_t n_cols, uint32_t val);
-    size_t count(uint32_t val) const;
+    void fill(T val);
+    void fill(size_t row, size_t col, size_t n_rows, size_t n_cols, T val);
+    size_t count(T val) const;
 
     void write_png(const std::string& filename) const;
     void read_png(const std::string& filename);
@@ -51,11 +52,11 @@ public:
         if(m_N != other.m_N) {
             free_image();
             m_N = other.m_N;
-            cuda_assert(cudaMallocManaged(&m_data, m_N * m_N * sizeof(uint32_t)));
+            cuda_assert(cudaMallocManaged(&m_data, m_N * m_N * sizeof(T)));
         }
 
         cuda_assert(cudaMemcpy(m_data, other.m_data,
-                               m_N * m_N * sizeof(uint32_t), cudaMemcpyKind::cudaMemcpyDefault));
+                               m_N * m_N * sizeof(T), cudaMemcpyKind::cudaMemcpyDefault));
         sync();
 
         return *this;
@@ -89,7 +90,7 @@ public:
     }
 
 private:
-    uint32_t *m_data;
+    T *m_data;
     size_t m_N;
 
     void free_image() {
@@ -97,5 +98,12 @@ private:
             cuda_assert(cudaFree(m_data));
         }
     }
+
+    int n_components() const;
 };
+
+// Explicit initialization for scalar types
+template class GPUImage<uint8_t>;
+template class GPUImage<uint32_t>;
+
 }

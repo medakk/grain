@@ -162,7 +162,7 @@ __global__ void gpu_sprinkle(grain_t *out, size_t n, grain_t value,
     }
 }
 
-void GrainSim::step(const GPUImage& in, GPUImage& out) {
+void GrainSim::step(const GrainSim::ImageType& in, GrainSim::ImageType& out) {
     // todo find better way to do double buffer
     out = in; // GPU-copy from in to out
 
@@ -186,7 +186,7 @@ void GrainSim::step(const GPUImage& in, GPUImage& out) {
     cuda_assert(cudaPeekAtLastError());
 }
 
-void GrainSim::sprinkle(grain::GPUImage &image, grain_t value,
+void GrainSim::sprinkle(GrainSim::ImageType &image, grain_t value,
                         size_t x, size_t y, size_t sz) {
     dim3 threadsPerBlock(16, 16);
     dim3 numBlocks((sz + 16 - 1)/16, (sz + 16 - 1)/16);

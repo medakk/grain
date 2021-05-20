@@ -9,6 +9,8 @@ namespace grain{
 
 class GrainSim {
 public:
+    using ImageType = GPUImage<grain_t>;
+
     GrainSim(size_t N_, size_t speed_ = 1, const std::string &init_filename_ = "")
             : m_N(N_), m_speed(speed_), m_init_filename(init_filename_) {
         // create two buffers for current state and previous state
@@ -21,11 +23,10 @@ public:
 
     const grain_t* update(EventData& event_data, bool verbose=true);
 
-
 private:
     size_t m_N;
     size_t m_speed{1};
-    std::vector<GPUImage> m_images;
+    std::vector<ImageType> m_images;
     size_t m_frame_count{0};
     size_t m_brush_idx{1}; // index for the current user-selected brush
     std::string m_init_filename{};
@@ -42,12 +43,12 @@ private:
     // reset state
     void init();
 
-    void step(const GPUImage& in, GPUImage& out);
+    void step(const ImageType& in, ImageType& out);
 
-    void handle_brush_events(GPUImage& image, EventData& event_data);
+    void handle_brush_events(ImageType& image, EventData& event_data);
 
     // these are generic operations. perhaps they can be moved to a different place later
-    static void sprinkle(grain::GPUImage& image, grain_t value,
+    static void sprinkle(ImageType& image, grain_t value,
                          size_t x, size_t y,size_t sz);
 };
 
