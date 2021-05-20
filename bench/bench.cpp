@@ -5,7 +5,9 @@
 //TODO more fine-grained benchmarks. World size, speed, different initialization configs, etc
 
 static void BM_Step(benchmark::State& state) {
-    grain::GrainSim grain_sim(1024, 20);
+    // todo should assert the file exists or something
+
+    grain::GrainSim grain_sim(1024, 20, "../bench/init_00.png");
     grain::EventData event_data{};
 
     const bool verbose = false;
