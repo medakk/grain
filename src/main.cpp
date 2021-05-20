@@ -9,6 +9,7 @@ struct Options {
     size_t N{256};
     size_t speed{1};
     bool start_paused{false};
+    bool verbose{false};
     std::string init_filename{};
 };
 
@@ -23,6 +24,8 @@ Options parse_args(int argc, char *argv[]) {
              cxxopts::value<bool>()->default_value("false"))
             ("i,init-filename", "load initial state from .PNG file",
              cxxopts::value<std::string>()->default_value(""))
+            ("v,verbose", "log information",
+             cxxopts::value<bool>()->default_value("false"))
             ("h,help", "print usage");
     const auto result = options.parse(argc, argv);
 
@@ -36,6 +39,7 @@ Options parse_args(int argc, char *argv[]) {
     ret.speed = result["speed"].as<int>();
     ret.start_paused = result["start-paused"].as<bool>();
     ret.init_filename = result["init-filename"].as<std::string>();
+    ret.verbose = result["verbose"].as<bool>();
 
     return ret;
 }
@@ -56,7 +60,7 @@ int main(int argc, char *argv[]) {
 
     // create renderer and start update loop
     grain::MiniFBRenderer::start([&]() {
-        const uint32_t* data = grain_sim.update(event_data);
+        const uint32_t* data = grain_sim.update(event_data, options.verbose);
         return data;
     }, event_data, options.N, options.N);
 
