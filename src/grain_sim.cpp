@@ -1,3 +1,4 @@
+#include <chrono>
 #include "grain_sim.h"
 #include "fmt/format.h"
 
@@ -27,8 +28,7 @@ const uint32_t* GrainSim::update(EventData& event_data) {
     }
 
     if(!event_data.paused) {
-        const auto n_sand = image0.count(GrainType::Sand | (m_frame_count % 2));
-        fmt::print("[F: {:7}] [sand: {:3}] \n", m_frame_count, n_sand);
+        const auto start_time = std::chrono::system_clock::now();
 
         // perform update
         step(image0, image1);
@@ -52,11 +52,16 @@ const uint32_t* GrainSim::update(EventData& event_data) {
             const auto brush = m_brushes[m_brush_idx];
             sprinkle(image1, brush, x, y, sz);
         }
+        image1.sync();
 
+        const auto end_time = std::chrono::system_clock::now();
+        double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(
+                end_time - start_time).count();
+        fmt::print("[F: {:7}] [iter_time: {:.6}ms] \n", m_frame_count, elapsed_seconds*1000.0);
         m_frame_count++;
+    } else {
+        image1.sync();
     }
-
-    image1.sync();
 
     if(event_data.screenshot) {
         image1.write_png("screenshot.png");
