@@ -64,6 +64,11 @@ const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
     return image1.data();
 }
 
+GPUImage<uint32_t> GrainSim::as_color_image() const {
+    const auto& image = m_images[m_frame_count % 2];
+    return image.as_type<uint32_t>();
+}
+
 void GrainSim::handle_brush_events(GrainSim::ImageType& image, EventData& event_data) {
     // brush change events
     if(event_data.next_brush) {

@@ -25,7 +25,7 @@ __device__ __host__ static bool is_done(grain_t val, grain_t turn) {
 
 [[nodiscard]]
 __device__ __host__ static grain_t mark_done(grain_t val, grain_t turn) {
-    turn ^= 1; // flips the bit
+    turn ^= GrainType::MASK_TURN;
     return (val & GrainType::MASK_TYPE) | turn;
 }
 }

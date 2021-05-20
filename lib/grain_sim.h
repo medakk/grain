@@ -23,6 +23,10 @@ public:
 
     const grain_t* update(EventData& event_data, bool verbose=true);
 
+    // todo return the buffer as 4-channel image. should be removed after implemented in shader
+    // return the buffer as 4-channel image
+    GPUImage<uint32_t> as_color_image() const;
+
 private:
     size_t m_N;
     size_t m_speed{1};

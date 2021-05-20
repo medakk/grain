@@ -89,6 +89,9 @@ public:
         return *this;
     }
 
+    template <typename S>
+    GPUImage<S> as_type() const;
+
 private:
     T *m_data;
     size_t m_N;

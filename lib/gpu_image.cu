@@ -15,6 +15,16 @@ __global__ void gpu_fill(T *buf, size_t n,
     }
 }
 
+template<typename T, typename S>
+__global__ void gpu_as_type(const T *in, S *out, size_t n) {
+    auto x = blockIdx.x * blockDim.x + threadIdx.x;
+    auto y = blockIdx.y * blockDim.y + threadIdx.y;
+    if(x < n && y < n) {
+        auto idx = x + y * n;
+        out[idx] = in[idx];
+    }
+}
+
 template<typename T>
 __global__ void gpu_fill_block(T *buf, size_t n,
                                size_t start_x, size_t start_y,
@@ -84,5 +94,22 @@ size_t GPUImage<T>::count(T val) const {
 
     return out;
 }
+template<typename T>
+template<typename S>
+GPUImage<S> GPUImage<T>::as_type() const {
+    GPUImage<S> new_image(m_N);
+
+    const size_t n_threads = 16;
+    dim3 threadsPerBlock(n_threads, n_threads);
+    dim3 numBlocks((m_N + n_threads - 1) / n_threads, (m_N + n_threads - 1) / n_threads);
+
+    gpu_as_type<<<numBlocks, threadsPerBlock>>>(m_data, new_image.data(), m_N);
+
+    cuda_assert(cudaPeekAtLastError());
+
+    return new_image;
+}
+
+template GPUImage<uint32_t> GPUImage<uint8_t>::as_type() const;
 
 }

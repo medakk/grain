@@ -58,10 +58,13 @@ int main(int argc, char *argv[]) {
     grain::EventData event_data;
     event_data.paused = options.start_paused;
 
+    grain::GPUImage<uint32_t> display_image(options.N);
+
     // create renderer and start update loop
     grain::MiniFBRenderer::start([&]() {
-        const uint32_t* data = grain_sim.update(event_data, options.verbose);
-        return data;
+        grain_sim.update(event_data, options.verbose);
+        display_image = grain_sim.as_color_image();
+        return display_image.data();
     }, event_data, options.N, options.N);
 
     return 0;
