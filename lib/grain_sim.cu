@@ -171,11 +171,12 @@ void GrainSim::step(const GrainSim::ImageType& in, GrainSim::ImageType& out) {
     dim3 threadsPerBlock(T, T);
     dim3 numBlocks((thirds + 2*T - 1) / (2 * T), (thirds + 2*T - 1) / (2 * T));
 
-    // todo this is incorrect, we maybe wasting a full step on a noop
-    auto turn = m_frame_count % 2;
+    // todo this is incorrect, we maybe wasting a full step on a noop. also this is a hack
+    static_assert(GrainType::MASK_TURN == 0x80, "you changed MASK_TURN but forgot to fix this hack");
+    auto turn = (m_frame_count % 2) << 7;
 
     for(size_t i=0; i<m_speed; i++) {
-        turn ^= 1;
+        turn ^= GrainType::MASK_TURN;
         // gpu_slow_step<<<1, 1>>>(out.data(), m_N, turn);
         gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, turn, 0, 0);
         gpu_step<<<numBlocks, threadsPerBlock>>>(out.data(), m_N, turn, 0, 1);

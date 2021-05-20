@@ -12,8 +12,8 @@ public:
 
     // a hack for now, use the rightmost bit to store whether this cell has been
     // updated or not
-    static const grain_t MASK_TYPE = 0xfe;
-    static const grain_t MASK_TURN = 0x01;
+    static const grain_t MASK_TYPE = 0x7f;
+    static const grain_t MASK_TURN = 0x80;
 
     static const grain_t Undefined = 0xff & MASK_TYPE;
     static const grain_t Blank     = 0x44 & MASK_TYPE;
