@@ -17,8 +17,10 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/fmt)
 find_package(fmt)
 
 # Find google benchmark
-option(BENCHMARK_ENABLE_GTEST_TESTS "" OFF)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/benchmark)
+if(GRAIN_BENCHMARK)
+    option(BENCHMARK_ENABLE_GTEST_TESTS "" OFF)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/benchmark)
+endif()
 
 # List of dependencies to link to that are common for all targets
 set(GRAIN_DEPS minifb fmt::fmt CUDA::cudart CUDA::cuda_driver)
@@ -56,12 +58,13 @@ target_link_libraries(grain_bin PRIVATE
 ###############################
 # Build benchmarks grain_bench
 ###############################
-
-add_executable(grain_bench bench/bench.cpp)
-target_include_directories(grain_bench PRIVATE
-        "lib/" # TODO better way to expose headers.
-        "bench/")
-target_link_libraries(grain_bench PRIVATE
-        grain_lib
-        ${GRAIN_DEPS}
-        benchmark::benchmark)
+if(GRAIN_BENCHMARK)
+    add_executable(grain_bench bench/bench.cpp)
+    target_include_directories(grain_bench PRIVATE
+            "lib/" # TODO better way to expose headers.
+            "bench/")
+    target_link_libraries(grain_bench PRIVATE
+            grain_lib
+            ${GRAIN_DEPS}
+            benchmark::benchmark)
+endif()
