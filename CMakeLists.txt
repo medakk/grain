@@ -15,6 +15,10 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/minifb)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/fmt)
 find_package(fmt)
 
+# Find google benchmark
+option(BENCHMARK_ENABLE_GTEST_TESTS "" OFF)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/benchmark)
+
 # List of dependencies to link to that are common for all targets
 set(GRAIN_DEPS minifb fmt::fmt CUDA::cudart CUDA::cuda_driver)
 
