@@ -17,7 +17,7 @@ public:
     static const uint32_t Sand      = 0xffc4a75c & MASK_TYPE;
     static const uint32_t Water     = 0xff20acf7 & MASK_TYPE;
     static const uint32_t Lava      = 0xff9e2416 & MASK_TYPE;
-    static const uint32_t Smoke     = 0xff0f0e0d & MASK_TYPE;
+    static const uint32_t Smoke     = 0xff3f3b33 & MASK_TYPE;
 
     static const uint32_t Debug0    = 0xff00ff00 & MASK_TYPE;
     static const uint32_t Debug1    = 0xff00cc00 & MASK_TYPE;
