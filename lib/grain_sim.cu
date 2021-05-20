@@ -7,7 +7,61 @@
 
 namespace grain {
 
-__device__ void gpu_update_cell(uint32_t* buf, size_t n, size_t turn, size_t x, size_t y) {
+__device__ void gpu_update_sandlike(uint32_t* buf, size_t n, size_t turn,
+                                    int x, int y, uint32_t& val) {
+    const auto type = val & GrainType::MASK_TYPE;
+    if (y != n - 1) {
+        if (is_passable(buf[x + (y + 1) * n])) {
+            val = buf[x + (y + 1) * n] & GrainType::MASK_TYPE;
+            buf[x + (y + 1) * n] = mark_done(type, turn);
+        } else if (x != 0
+                   && is_passable(buf[x - 1 + (y + 1) * n])) {
+            val = buf[x - 1 + (y + 1) * n];
+            buf[x - 1 + (y + 1) * n] = mark_done(type, turn);
+        } else if (x != n - 1
+                   && is_passable(buf[x + 1 + (y + 1) * n])) {
+            val = buf[x + 1 + (y + 1) * n];
+            buf[x + 1 + (y + 1) * n] = mark_done(type, turn);
+        }
+    }
+}
+
+__device__ void gpu_update_waterlike(uint32_t *buf, size_t n, size_t turn,
+                                     int x, int y, uint32_t &val) {
+    const auto type = val & GrainType::MASK_TYPE;
+    if (y != n - 1 && is_type(buf[x + (y + 1) * n], GrainType::Blank)) {
+        val = GrainType::Blank;
+        buf[x + (y + 1) * n] = mark_done(type, turn);
+    } else if (y != n - 1 && x != 0
+               && is_type(buf[x - 1 + (y + 1) * n], GrainType::Blank)) {
+        val = GrainType::Blank;
+        buf[x - 1 + (y + 1) * n] = mark_done(type, turn);
+    } else if (y != n - 1 && x != n - 1
+               && is_type(buf[x + 1 + (y + 1) * n], GrainType::Blank)) {
+        val = GrainType::Blank;
+        buf[x + 1 + (y + 1) * n] = mark_done(type, turn);
+    } else if (x != 0
+               && is_type(buf[x - 1 + y * n], GrainType::Blank)) {
+        val = GrainType::Blank;
+        buf[x - 1 + y * n] = mark_done(type, turn);
+    } else if (x != n - 1
+               && is_type(buf[x + 1 + y * n], GrainType::Blank)) {
+        val = GrainType::Blank;
+        buf[x + 1 + y * n] = mark_done(type, turn);
+    }
+}
+__device__ void gpu_update_smokelike(uint32_t* buf, size_t n, size_t turn,
+                                     int x, int y, uint32_t& val) {
+    const auto type = val & GrainType::MASK_TYPE;
+    if(y == 0) {
+        val = GrainType::Blank;
+    } else if(is_passable(buf[x + (y-1)*n])) {
+        val = buf[x + (y - 1) * n] & GrainType::MASK_TYPE;
+        buf[x + (y - 1) * n] = mark_done(type, turn);
+    }
+}
+
+__device__ void gpu_update_cell(uint32_t* buf, size_t n, size_t turn, int x, int y) {
     auto idx = x + y * n;
     auto val = buf[idx];
     if (!is_done(val, turn)) {
@@ -15,41 +69,29 @@ __device__ void gpu_update_cell(uint32_t* buf, size_t n, size_t turn, size_t x, 
         if (is_type(val, GrainType::Blank)) {
 
         } else if (is_type(val, GrainType::Sand)) {
-            if (y != n - 1) {
-                if (is_passable(buf[x + (y + 1) * n])) {
-                    val = buf[x + (y + 1) * n] & GrainType::MASK_TYPE;
-                    buf[x + (y + 1) * n] = mark_done(GrainType::Sand, turn);
-                } else if (x != 0
-                           && is_passable(buf[x - 1 + (y + 1) * n])) {
-                    val = buf[x - 1 + (y + 1) * n];
-                    buf[x - 1 + (y + 1) * n] = mark_done(GrainType::Sand, turn);
-                } else if (x != n - 1
-                           && is_passable(buf[x + 1 + (y + 1) * n])) {
-                    val = buf[x + 1 + (y + 1) * n];
-                    buf[x + 1 + (y + 1) * n] = mark_done(GrainType::Sand, turn);
+            gpu_update_sandlike(buf, n, turn, x, y, val);
+        } else if (is_type(val, GrainType::Water)) {
+            gpu_update_waterlike(buf, n, turn, x, y, val);
+        } else if (is_type(val, GrainType::Lava)) {
+            bool done = false;
+            // lava can destroy all the water/etc around it
+            for(int dx=-1; dx<=1; dx++) {
+                for(int dy=-1; dy<=1; dy++) {
+                    const auto nx = x + dx;
+                    const auto ny = y + dy;
+                    if (nx >= 0 && nx < n - 1 && ny >= 0 && ny < n - 1
+                        && is_type(buf[nx + ny * n], GrainType::Water)) {
+                        val = GrainType::GrainType::Smoke;
+                        buf[nx + ny * n] = mark_done(GrainType::Smoke, turn);
+                        done = true;
+                    }
                 }
             }
-        } else if (is_type(val, GrainType::Water)) {
-            if (y != n - 1 && is_type(buf[x + (y + 1) * n], GrainType::Blank)) {
-                val = GrainType::Blank;
-                buf[x + (y + 1) * n] = mark_done(GrainType::Water, turn);
-            } else if (y != n - 1 && x != 0
-                       && is_type(buf[x - 1 + (y + 1) * n], GrainType::Blank)) {
-                val = GrainType::Blank;
-                buf[x - 1 + (y + 1) * n] = mark_done(GrainType::Water, turn);
-            } else if (y != n - 1 && x != n - 1
-                       && is_type(buf[x + 1 + (y + 1) * n], GrainType::Blank)) {
-                val = GrainType::Blank;
-                buf[x + 1 + (y + 1) * n] = mark_done(GrainType::Water, turn);
-            } else if (x != 0
-                       && is_type(buf[x - 1 + y * n], GrainType::Blank)) {
-                val = GrainType::Blank;
-                buf[x - 1 + y * n] = mark_done(GrainType::Water, turn);
-            } else if (x != n - 1
-                       && is_type(buf[x + 1 + y * n], GrainType::Blank)) {
-                val = GrainType::Blank;
-                buf[x + 1 + y * n] = mark_done(GrainType::Water, turn);
+            if(!done) {
+                gpu_update_waterlike(buf, n, turn, x, y, val);
             }
+        } else if (is_type(val, GrainType::Smoke)) {
+            gpu_update_smokelike(buf, n, turn, x, y, val);
         }
 
         val = mark_done(val, turn);
@@ -65,11 +107,11 @@ __global__ void gpu_slow_step(uint32_t *buf, size_t n, uint32_t turn) {
     }
 }
 
-__global__ void gpu_step(uint32_t* buf, size_t n, uint32_t turn, size_t bx, size_t by) {
-    auto sx = bx * 3 + blockIdx.x * blockDim.x * 6 + threadIdx.x * 6;
-    auto sy = by * 3 + blockIdx.y * blockDim.y * 6 + threadIdx.y * 6;
-    for(size_t dx=0; dx<3; dx++) {
-        for(size_t dy=0; dy<3; dy++) {
+__global__ void gpu_step(uint32_t* buf, size_t n, uint32_t turn, int bx, int by) {
+    int sx = bx * 3 + blockIdx.x * blockDim.x * 6 + threadIdx.x * 6;
+    int sy = by * 3 + blockIdx.y * blockDim.y * 6 + threadIdx.y * 6;
+    for(int dx=0; dx<3; dx++) {
+        for(int dy=0; dy<3; dy++) {
             auto x = sx + dx;
             auto y = sy + dy;
             if(x < n && y < n) {

@@ -27,14 +27,16 @@ private:
     size_t m_speed{1};
     std::vector<GPUImage> m_images;
     size_t m_frame_count{0};
-    size_t m_brush_idx{0}; // index for the current user-selected brush
+    size_t m_brush_idx{1}; // index for the current user-selected brush
     std::string m_init_filename{};
 
     // could be static, but that's a pain...
-    std::array<uint32_t, 3> m_brushes{
-        GrainType::Sand,
+    std::array<uint32_t, 5> m_brushes{
         GrainType::Blank,
+        GrainType::Sand,
         GrainType::Water,
+        GrainType::Lava,
+        GrainType::Smoke,
     };
 
     // reset state
