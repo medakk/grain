@@ -15,6 +15,10 @@ void GrainSim::init() {
 }
 
 const uint32_t* GrainSim::update(EventData& event_data, bool verbose) {
+    if(!event_data.paused) {
+        m_frame_count++;
+    }
+
     // figure out which buffer is in vs out
     const auto &image0 = m_images[m_frame_count % 2];
     auto& image1 = m_images[(m_frame_count+1) % 2];
@@ -28,41 +32,23 @@ const uint32_t* GrainSim::update(EventData& event_data, bool verbose) {
     }
 
     if(!event_data.paused) {
-        const auto start_time = std::chrono::system_clock::now();
+        using namespace std::chrono;
+        const auto start_time = system_clock::now();
 
         // perform update
         step(image0, image1);
 
-        // brush change events
-        if(event_data.next_brush) {
-            m_brush_idx = (m_brush_idx + 1) % m_brushes.size();
-            event_data.next_brush = false;
-        }
-        if(event_data.prev_brush) {
-            m_brush_idx = (m_brush_idx + m_brushes.size() - 1) % m_brushes.size();
-            event_data.prev_brush = false;
-        }
-
-        // handle mouse events
-        if(event_data.mouse_pressed) {
-            const size_t sz = 30.0 * (m_N / 512.0);
-            const size_t x = event_data.mouse_x * (m_N - 1) - sz / 2.0;
-            const size_t y = event_data.mouse_y * (m_N - 1) - sz / 2.0;
-            const auto brush = m_brushes[m_brush_idx];
-            sprinkle(image1, brush, x, y, sz);
-        }
-        image1.sync();
-
-        const auto end_time = std::chrono::system_clock::now();
-        const double elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(
+        const auto end_time = system_clock::now();
+        const double elapsed_seconds = duration_cast<duration<double>>(
                 end_time - start_time).count();
         if(verbose) {
             fmt::print("[F: {:7}] [iter_time: {:.6}ms] \n", m_frame_count, elapsed_seconds*1000.0);
         }
-        m_frame_count++;
-    } else {
-        image1.sync();
     }
+
+    handle_brush_events(image1, event_data);
+
+    image1.sync();
 
     if(event_data.screenshot) {
         image1.write_png("screenshot.png");
@@ -70,6 +56,27 @@ const uint32_t* GrainSim::update(EventData& event_data, bool verbose) {
     }
 
     return image1.data();
+}
+
+void GrainSim::handle_brush_events(GPUImage& image, EventData& event_data) {
+    // brush change events
+    if(event_data.next_brush) {
+        m_brush_idx = (m_brush_idx + 1) % m_brushes.size();
+        event_data.next_brush = false;
+    }
+    if(event_data.prev_brush) {
+        m_brush_idx = (m_brush_idx + m_brushes.size() - 1) % m_brushes.size();
+        event_data.prev_brush = false;
+    }
+
+    // handle mouse events
+    if(event_data.mouse_pressed) {
+        const size_t sz = 30.0 * (m_N / 512.0);
+        const size_t x = event_data.mouse_x * (m_N - 1) - sz / 2.0;
+        const size_t y = event_data.mouse_y * (m_N - 1) - sz / 2.0;
+        const auto brush = m_brushes[m_brush_idx];
+        sprinkle(image, brush, x, y, sz);
+    }
 }
 
 }

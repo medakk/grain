@@ -40,6 +40,8 @@ private:
 
     void step(const GPUImage& in, GPUImage& out);
 
+    void handle_brush_events(GPUImage& image, EventData& event_data);
+
     // these are generic operations. perhaps they can be moved to a different place later
     static void sprinkle(grain::GPUImage& image, uint32_t value,
                          size_t x, size_t y,size_t sz);
