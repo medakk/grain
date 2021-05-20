@@ -15,20 +15,35 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/minifb)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/fmt)
 find_package(fmt)
 
+# List of dependencies to link to that are common for all targets
+set(GRAIN_DEPS minifb fmt::fmt CUDA::cudart CUDA::cuda_driver)
+
+###########################
+# Build library grain_lib
+###########################
+
 # Add source files. CMake takes care of using nvcc for .cu files
-file(GLOB SRCFILES
-        src/*.cpp
-        src/*.cu)
-add_executable(grain_bin ${SRCFILES})
+file(GLOB LIBFILES
+        lib/*.cpp
+        lib/*.cu)
+add_library(grain_lib ${LIBFILES})
 
 # todo this seems specific to my GTX 1050. Need to figure out how to make it work anywhere
-set_target_properties(grain_bin PROPERTIES CUDA_ARCHITECTURES "61")
+set_target_properties(grain_lib PROPERTIES CUDA_ARCHITECTURES "61")
 
-target_include_directories(grain_bin PRIVATE
-        "src/"
+target_include_directories(grain_lib PRIVATE
+        "lib/"
         ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+target_link_libraries(grain_lib PRIVATE ${GRAIN_DEPS})
+
+##############################
+# Build executable grain_bin
+##############################
+
+add_executable(grain_bin src/main.cpp)
+target_include_directories(grain_bin PRIVATE
+        "lib/" # TODO better way to expose headers.
+        "src/")
 target_link_libraries(grain_bin PRIVATE
-        minifb
-        fmt::fmt
-        CUDA::cudart
-        CUDA::cuda_driver)
+        grain_lib
+        ${GRAIN_DEPS})

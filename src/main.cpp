@@ -1,6 +1,4 @@
-#include <cuda_runtime.h>
 #include "cxxopts.hpp"
-
 #include "renderer.h"
 #include "grain_types.h"
 #include "grain_sim.h"
