@@ -16,11 +16,11 @@ Options parse_args(int argc, char *argv[]) {
     cxxopts::Options options("grain", "GPU accelerated falling sand simulation");
     options.add_options()
             ("n,world-size", "size of world",
-                    cxxopts::value<int>()->default_value("256"))
+             cxxopts::value<int>()->default_value("256"))
             ("s,speed", "number of iterations to run per update",
              cxxopts::value<int>()->default_value("1"))
             ("p,start-paused", "start with simulation paused. <space> to resume",
-                    cxxopts::value<bool>()->default_value("false"))
+             cxxopts::value<bool>()->default_value("false"))
             ("i,init-filename", "load initial state from .PNG file",
              cxxopts::value<std::string>()->default_value(""))
             ("h,help", "print usage");
