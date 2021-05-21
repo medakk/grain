@@ -2,7 +2,9 @@
 
 #include "util.h"
 
+
 namespace grain {
+
 template <typename T>
 class GPUImage {
 public:

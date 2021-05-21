@@ -7,6 +7,9 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+// shorthand for indexing
+#define I(x, y) (x) + (y) * n
+
 template<class IteratorType>
 void print_arr(IteratorType it, IteratorType end, char end_ch='\n') {
     while(it != end) {

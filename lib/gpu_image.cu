@@ -20,7 +20,7 @@ __global__ void gpu_as_type(const T *in, S *out, size_t n) {
     auto x = blockIdx.x * blockDim.x + threadIdx.x;
     auto y = blockIdx.y * blockDim.y + threadIdx.y;
     if(x < n && y < n) {
-        auto idx = x + y * n;
+        auto idx = I(x, y);
         out[idx] = in[idx];
     }
 }
@@ -33,7 +33,7 @@ __global__ void gpu_fill_block(T *buf, size_t n,
     auto x = start_x + blockIdx.x * blockDim.x + threadIdx.x;
     auto y = start_y + blockIdx.y * blockDim.y + threadIdx.y;
     if(x < n && y < n && x < start_x + w && y < start_y + h) {
-        auto idx = x + y * n;
+        auto idx = I(x, y);
         buf[idx] = value;
     }
 }
@@ -43,7 +43,7 @@ __global__ void gpu_count(T *buf, size_t n, T val, int* out) {
     auto x = blockIdx.x * blockDim.x + threadIdx.x;
     auto y = blockIdx.y * blockDim.y + threadIdx.y;
     if(x < n && y < n) {
-        auto idx = x + y * n;
+        auto idx = I(x, y);
         if(buf[idx] == val) {
             // todo parallel reduction?
             atomicAdd(out, 1);
