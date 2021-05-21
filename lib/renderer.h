@@ -36,6 +36,8 @@
 #include <cstdio>
 #include <fstream>
 #include <streambuf>
+#include <chrono>
+#include <fmt/format.h>
 
 #include "grain_types.h"
 #include "gpu_image.h"
@@ -45,7 +47,7 @@ namespace grain {
 class OpenGLRenderer {
 public:
     template<typename F>
-    static void start(F compute_buffer_func, EventData& event_data, int w, int h) {
+    static void start(F compute_buffer_func, EventData& event_data, int w, int h, bool verbose=false) {
         // todo make whole thing neater
 
         print_usage();
@@ -158,10 +160,11 @@ public:
         /////////////////////////////
         // Main loop
         while (!glfwWindowShouldClose(window)) {
+            using namespace std::chrono;
+            const auto start_time = system_clock::now();
             float ratio;
             int width, height;
             mat4x4 m, p, mvp;
-
 
             glfwGetFramebufferSize(window, &width, &height);
             ratio = width / (float) height;
@@ -197,6 +200,13 @@ public:
 
             glfwSwapBuffers(window);
             glfwPollEvents();
+
+            const auto end_time = system_clock::now();
+            const double elapsed_seconds = duration_cast<duration<double>>(
+                    end_time - start_time).count();
+            if(verbose) {
+                fmt::print("             [total_time: {:.6}ms] \n", elapsed_seconds*1000.0);
+            }
         }
 
         glfwDestroyWindow(window);

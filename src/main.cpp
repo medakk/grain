@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
     // create renderer and start update loop
     grain::OpenGLRenderer::start([&]() {
         return grain_sim.update(event_data, options.verbose);
-    }, event_data, options.N, options.N);
+    }, event_data, options.N, options.N, options.verbose);
 
     return 0;
 }

@@ -74,7 +74,7 @@ const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
         const double elapsed_seconds = duration_cast<duration<double>>(
                 end_time - start_time).count();
         if(verbose) {
-            fmt::print("[F: {:7}] [iter_time: {:.6}ms] \n", m_frame_count, elapsed_seconds*1000.0);
+            fmt::print("[F: {:7}] [iter_time:  {:.6}ms] \n", m_frame_count, elapsed_seconds*1000.0);
         }
     }
 
