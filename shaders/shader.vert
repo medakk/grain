@@ -1,4 +1,4 @@
-#version 110
+#version 130
 
 uniform mat4 MVP;
 attribute vec2 vUV;

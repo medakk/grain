@@ -38,6 +38,7 @@
 #include <streambuf>
 
 #include "grain_types.h"
+#include "gpu_image.h"
 
 namespace grain {
 
@@ -45,7 +46,9 @@ class OpenGLRenderer {
 public:
     template<typename F>
     static void start(F compute_buffer_func, EventData& event_data, int w, int h) {
-        // todo make neater
+        // todo make whole thing neater
+
+        print_usage();
 
         /////////////////////////////
         // GLFW Setup
@@ -62,13 +65,15 @@ public:
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-        window = glfwCreateWindow(800, 800, "Simple example", NULL, NULL);
+        window = glfwCreateWindow(800, 800, "grain", nullptr, nullptr);
         if (!window) {
             glfwTerminate();
             exit(EXIT_FAILURE);
         }
 
+        glfwSetWindowUserPointer(window, &event_data);
         glfwSetKeyCallback(window, keyboard_callback);
+        glfwSetMouseButtonCallback(window, mouse_button_callback);
 
         glfwMakeContextCurrent(window);
         gladLoadGL(glfwGetProcAddress);
@@ -76,14 +81,12 @@ public:
 
         /////////////////////////////
         // OpenGL Setup
-
-        // NOTE: OpenGL error checks have been omitted for brevity
         const auto vertex_shader_text = load_text_file("../shaders/shader.vert");
         const auto fragment_shader_text = load_text_file("../shaders/shader.frag");
 
         // During init, enable debug output
         glEnable(GL_DEBUG_OUTPUT);
-        glDebugMessageCallback(gl_error_callback, 0);
+        glDebugMessageCallback(gl_error_callback, nullptr);
 
         glGenBuffers(1, &vertex_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -91,13 +94,16 @@ public:
 
         vertex_shader = glCreateShader(GL_VERTEX_SHADER);
         const char *vertex_sources[] = { vertex_shader_text.c_str() };
-        glShaderSource(vertex_shader, 1, vertex_sources, NULL);
+        glShaderSource(vertex_shader, 1, vertex_sources, nullptr);
         glCompileShader(vertex_shader);
+        check_shader(vertex_shader);
+
 
         fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
         const char *fragment_sources[] = { fragment_shader_text.c_str() };
-        glShaderSource(fragment_shader, 1, fragment_sources, NULL);
+        glShaderSource(fragment_shader, 1, fragment_sources, nullptr);
         glCompileShader(fragment_shader);
+        check_shader(fragment_shader);
 
         program = glCreateProgram();
         glAttachShader(program, vertex_shader);
@@ -116,18 +122,44 @@ public:
                               sizeof(vertices[0]), (void*) (sizeof(float) * 2));
 
         /////////////////////////////
-        // Main loop
+        // Texture stuff
 
+        // Create one OpenGL texture
+        GLuint textureID;
+        glGenTextures(1, &textureID);
+
+        // "Bind" the newly created texture : all future texture functions will modify this texture
+        glBindTexture(GL_TEXTURE_2D, textureID);
+
+        // Give the image to OpenGL
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        // GLint main_tex_location = glGetUniformLocation(program, "mainTex");
+        // glUniform1i(main_tex_location, textureID);
+
+        /////////////////////////////
+        // Main loop
         while (!glfwWindowShouldClose(window)) {
             float ratio;
             int width, height;
             mat4x4 m, p, mvp;
 
+
             glfwGetFramebufferSize(window, &width, &height);
             ratio = width / (float) height;
 
+            double xpos, ypos;
+            glfwGetCursorPos(window, &xpos, &ypos);
+            event_data.mouse_x = xpos / width;
+            event_data.mouse_y = ypos / height;
+            event_data.mouse_x = std::clamp(event_data.mouse_x, 0.0f, 1.0f);
+            event_data.mouse_y = std::clamp(event_data.mouse_y, 0.0f, 1.0f);
+
             glViewport(0, 0, width, height);
             glClear(GL_COLOR_BUFFER_BIT);
+
+            const auto data = compute_buffer_func();
 
             mat4x4_identity(m);
             mat4x4_translate(p, 0.0, 0.0, 5.0);
@@ -136,6 +168,10 @@ public:
             mat4x4_mul(mvp, p, m);
 
             glUseProgram(program);
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            // todo: this is probably doing GPU->CPU->GPU copy
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h,
+                         0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, data);
             glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -154,13 +190,21 @@ private:
         float u, v;
     } vertices[6] = {
             {-1.0f, -1.0f, 0.f, 0.f,},
-            {1.0f,  -1.0f, 0.f, 1.f,},
-            {-1.f,  1.0f,  0.f, 0.f,},
+            {1.0f,  -1.0f, 1.f, 0.f,},
+            {-1.f,  1.0f,  0.f, 1.f,},
 
-            {1.0f,  -1.0f, 0.f, 0.f,},
-            {1.0f,  1.0f,  0.f, 1.f,},
-            {-1.f,  1.0f,  0.f, 0.f,},
+            {1.0f,  -1.0f, 1.f, 0.f,},
+            {1.0f,  1.0f,  1.f, 1.f,},
+            {-1.f,  1.0f,  0.f, 1.f,},
     };
+
+    static void print_usage() {
+        std::cerr << "R:     Reset\n"
+                  << "S:     Screenshot(overwrites screenshot.png in current dir)\n"
+                  << "Q/E:   Previous/Next Brush\n"
+                  << "Space: Toggle pause\n"
+                  << "Esc:   Close\n";
+    }
 
     static std::string load_text_file(const std::string &filename) {
         std::ifstream file(filename);
@@ -184,10 +228,65 @@ private:
                 type, severity, message);
     }
 
-    static void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-            glfwSetWindowShouldClose(window, GLFW_TRUE);
+    static void check_shader(GLuint shader) {
+        GLint isCompiled = 0;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
+        if (isCompiled == GL_FALSE) {
+            GLint maxLength = 0;
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
+
+            // The maxLength includes the NULL character
+            std::vector<GLchar> errorLog(maxLength);
+            glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
+
+            for(auto ch : errorLog) {
+                std::cerr << ch;
+            }
+            std::cerr << '\n';
+
+            // Provide the infolog in whatever manor you deem best.
+            // Exit with failure.
+            glDeleteShader(shader); // Don't leak the shader.
+            throw std::runtime_error("Bad shader");
+        }
     }
+
+    static void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+        if(action != GLFW_PRESS) {
+            return;
+        }
+
+        EventData& event_data = *((EventData*)glfwGetWindowUserPointer(window));
+        switch(key) {
+            case GLFW_KEY_ESCAPE:
+                glfwSetWindowShouldClose(window, GLFW_TRUE);
+                break;
+            case GLFW_KEY_R:
+                event_data.reset = true;
+                break;
+            case GLFW_KEY_S:
+                event_data.screenshot = true;
+                break;
+            case GLFW_KEY_Q:
+                event_data.prev_brush = true;
+                break;
+            case GLFW_KEY_E:
+                event_data.next_brush = true;
+                break;
+            case GLFW_KEY_SPACE:
+                event_data.paused = !event_data.paused;
+                break;
+        }
+    }
+
+    static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+    {
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            EventData& event_data = *((EventData*)glfwGetWindowUserPointer(window));
+            event_data.mouse_pressed = action == GLFW_PRESS;
+        }
+    }
+
 };
 
 }

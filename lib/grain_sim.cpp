@@ -91,6 +91,10 @@ const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
 }
 
 void GrainSim::handle_brush_events(GrainSim::ImageType& image, EventData& event_data) {
+    //todo the event data being reset is kinda all over the place. some are here,
+    // some are in the renderer
+
+
     // brush change events
     if(event_data.next_brush) {
         m_brush_idx = (m_brush_idx + 1) % m_brushes.size();
