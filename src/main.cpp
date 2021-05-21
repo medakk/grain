@@ -3,6 +3,7 @@
 #include "cxxopts.hpp"
 #include "grain_types.h"
 #include "grain_sim.h"
+#include "renderer.h"
 
 struct Options {
     size_t N{256};
@@ -57,16 +58,14 @@ int main(int argc, char *argv[]) {
     grain::EventData event_data;
     event_data.paused = options.start_paused;
 
-    /*
     grain::GPUImage<uint32_t> display_image(options.N);
     // create renderer and start update loop
-    grain::MiniFBRenderer::start([&]() {
+    grain::OpenGLRenderer::start([&]() {
         grain_sim.update(event_data, options.verbose);
         grain_sim.as_color_image(display_image);
         display_image.sync();
         return display_image.data();
     }, event_data, options.N, options.N);
-    */
 
     return 0;
 }
