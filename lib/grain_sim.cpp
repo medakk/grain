@@ -7,12 +7,8 @@ namespace grain {
 
 GrainSim::GrainSim(size_t N_, size_t speed_, std::string init_filename_)
         : m_N(N_), m_speed(speed_),
-          m_init_filename(std::move(init_filename_)) {
-    // create two buffers for current state and previous state
-    for (int i = 0; i < 2; i++) {
-        m_images.emplace_back(m_N);
-    }
-
+          m_init_filename(std::move(init_filename_)),
+          m_image(N_) {
     init();
 
     // copy color map to GPU
@@ -26,24 +22,23 @@ GrainSim::~GrainSim() {
 }
 
 void GrainSim::init() {
-    m_images[0].fill(grain::GrainType::Blank);
+    m_image.fill(grain::GrainType::Blank);
 
     if(m_init_filename.empty()) {
         // just add a block of sand for debugging
-        m_images[0].fill(20, 20, 20, 20, GrainType::Sand);
+        m_image.fill(20, 20, 20, 20, GrainType::Sand);
     } else {
-        m_images[0].read_png(m_init_filename);
+        m_image.read_png(m_init_filename);
     }
 
     // add a stone border so we don't have to think about array index overflow
-    m_images[0].fill(0, 0, m_N, 1, GrainType::Stone);
-    m_images[0].fill(0, 0, 1, m_N, GrainType::Stone);
-    m_images[0].fill(0, m_N-1, m_N, 1, GrainType::Stone);
-    m_images[0].fill(m_N-1, 0, 1, m_N, GrainType::Stone);
+    m_image.fill(0, 0, m_N, 1, GrainType::Stone);
+    m_image.fill(0, 0, 1, m_N, GrainType::Stone);
+    m_image.fill(0, m_N-1, m_N, 1, GrainType::Stone);
+    m_image.fill(m_N-1, 0, 1, m_N, GrainType::Stone);
 
-    m_images[1] = m_images[0];
-    m_images[0].sync();
-    m_images[1].sync();
+    // make sure everything is flushed
+    m_image.sync();
 }
 
 const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
@@ -51,16 +46,12 @@ const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
         m_frame_count++;
     }
 
-    // figure out which buffer is in vs out
-    const auto &image0 = m_images[m_frame_count % 2];
-    auto& image1 = m_images[(m_frame_count+1) % 2];
-
     // check whether we should reset
     if(event_data.reset) {
         init();
         m_frame_count = 0;
         event_data.reset = false;
-        return image1.data();
+        return m_image.data();
     }
 
     if(!event_data.paused) {
@@ -68,7 +59,7 @@ const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
         const auto start_time = system_clock::now();
 
         // perform update
-        step(image0, image1);
+        step();
 
         const auto end_time = system_clock::now();
         const double elapsed_seconds = duration_cast<duration<double>>(
@@ -78,19 +69,19 @@ const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
         }
     }
 
-    handle_brush_events(image1, event_data);
+    handle_brush_events(event_data);
 
-    image1.sync();
+    m_image.sync();
 
     if(event_data.screenshot) {
-        image1.write_png("screenshot.png");
+        m_image.write_png("screenshot.png");
         event_data.screenshot = false;
     }
 
-    return image1.data();
+    return m_image.data();
 }
 
-void GrainSim::handle_brush_events(GrainSim::ImageType& image, EventData& event_data) {
+void GrainSim::handle_brush_events(EventData& event_data) {
     //todo the event data being reset is kinda all over the place. some are here,
     // some are in the renderer
 
@@ -111,7 +102,7 @@ void GrainSim::handle_brush_events(GrainSim::ImageType& image, EventData& event_
         const size_t x = event_data.mouse_x * (m_N - 1) - sz / 2.0;
         const size_t y = event_data.mouse_y * (m_N - 1) - sz / 2.0;
         const auto brush = m_brushes[m_brush_idx];
-        sprinkle(image, brush, x, y, sz);
+        sprinkle(m_image, brush, x, y, sz);
     }
 }
 

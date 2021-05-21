@@ -30,7 +30,7 @@ public:
 private:
     size_t m_N;
     size_t m_speed{1};
-    std::vector<ImageType> m_images;
+    ImageType m_image;
     size_t m_frame_count{0};
     size_t m_brush_idx{1}; // index for the current user-selected brush
     std::string m_init_filename{};
@@ -49,9 +49,9 @@ private:
     // reset state
     void init();
 
-    void step(const ImageType& in, ImageType& out);
+    void step();
 
-    void handle_brush_events(ImageType& image, EventData& event_data);
+    void handle_brush_events(EventData& event_data);
 
     // these are generic operations. perhaps they can be moved to a different place later
     static void sprinkle(ImageType& image, grain_t value,
