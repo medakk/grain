@@ -8,10 +8,6 @@ set(CMAKE_CXX_STANDARD 17)
 # Find CUDA
 find_package(CUDAToolkit REQUIRED)
 
-# Find minifb
-option(MINIFB_BUILD_EXAMPLES "" OFF)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/minifb)
-
 # Find fmt
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/fmt)
 find_package(fmt)
@@ -23,7 +19,7 @@ if(GRAIN_BENCHMARK)
 endif()
 
 # List of dependencies to link to that are common for all targets
-set(GRAIN_DEPS minifb fmt::fmt CUDA::cudart CUDA::cuda_driver)
+set(GRAIN_DEPS fmt::fmt CUDA::cudart CUDA::cuda_driver)
 
 ###########################
 # Build library grain_lib

@@ -1,7 +1,6 @@
 #include <string>
 
 #include "cxxopts.hpp"
-#include "renderer.h"
 #include "grain_types.h"
 #include "grain_sim.h"
 
@@ -58,8 +57,8 @@ int main(int argc, char *argv[]) {
     grain::EventData event_data;
     event_data.paused = options.start_paused;
 
+    /*
     grain::GPUImage<uint32_t> display_image(options.N);
-
     // create renderer and start update loop
     grain::MiniFBRenderer::start([&]() {
         grain_sim.update(event_data, options.verbose);
@@ -67,6 +66,7 @@ int main(int argc, char *argv[]) {
         display_image.sync();
         return display_image.data();
     }, event_data, options.N, options.N);
+    */
 
     return 0;
 }
