@@ -40,11 +40,11 @@ public:
     // way to keep everything organized. or a macro
     static constexpr uint32_t Colors[MAX_TYPES] = {
             0xffff00ff, // Undefined
-            0xff444444, // Blank
-            0xffc4a75c, // Sand
-            0xff20acf7, // Water
-            0xff9e2416, // Lava
-            0xff3f3b33, // Smoke
+            0xffb3c6b7, // Blank
+            0xffe4d08c, // Sand
+            0xff0086cc, // Water
+            0xfff55545, // Lava
+            0xff765d59, // Smoke
             0xff00ff00, // Debug0
             0xff00cc00, // Debug1
             0xff00aa00, // Debug2
