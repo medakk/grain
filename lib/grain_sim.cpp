@@ -26,13 +26,18 @@ void GrainSim::init() {
 
     if(m_init_filename.empty()) {
         // just add a block of sand for debugging
-        m_images[0].fill(20, 20, 20, 20, grain::GrainType::Sand);
+        m_images[0].fill(20, 20, 20, 20, GrainType::Sand);
     } else {
         m_images[0].read_png(m_init_filename);
     }
 
-    m_images[1] = m_images[0];
+    // add a stone border so we don't have to think about array index overflow
+    m_images[0].fill(0, 0, m_N, 1, GrainType::Stone);
+    m_images[0].fill(0, 0, 1, m_N, GrainType::Stone);
+    m_images[0].fill(0, m_N-1, m_N, 1, GrainType::Stone);
+    m_images[0].fill(m_N-1, 0, 1, m_N, GrainType::Stone);
 
+    m_images[1] = m_images[0];
     m_images[0].sync();
     m_images[1].sync();
 }

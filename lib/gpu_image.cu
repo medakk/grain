@@ -62,13 +62,13 @@ void GPUImage<T>::fill(T val) {
 }
 
 template<typename T>
-void GPUImage<T>::fill(size_t row, size_t col, size_t n_rows, size_t n_cols, T val) {
+void GPUImage<T>::fill(size_t start_x, size_t start_y, size_t w, size_t h, T val) {
     const size_t n_threads = 16;
     dim3 threadsPerBlock(n_threads, n_threads);
-    dim3 numBlocks((n_rows + n_threads - 1) / n_threads, (n_cols + n_threads - 1) / n_threads);
+    dim3 numBlocks((w + n_threads - 1) / n_threads, (h + n_threads - 1) / n_threads);
 
     gpu_fill_block<<<numBlocks, threadsPerBlock>>>(m_data, m_N,
-                                                   row, col, n_rows, n_cols,
+                                                   start_x, start_y, w, h,
                                                    val);
 
     cuda_assert(cudaPeekAtLastError());

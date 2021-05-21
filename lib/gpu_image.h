@@ -26,7 +26,7 @@ public:
     ///////////////////
     // image operations
     void fill(T val);
-    void fill(size_t row, size_t col, size_t n_rows, size_t n_cols, T val);
+    void fill(size_t start_x, size_t start_y, size_t w, size_t h, T val);
     size_t count(T val) const;
 
     void write_png(const std::string& filename) const;

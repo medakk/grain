@@ -13,42 +13,36 @@ const size_t THREAD_DIM = 2;
 __device__ void gpu_update_sandlike(grain_t* buf, size_t n, size_t turn,
                                     int x, int y, grain_t& val) {
     const auto type = val & GrainType::MASK_TYPE;
-    if (y != n - 1) {
-        if (is_passable(buf[I(x, y+1)])) {
-            val = buf[I(x, y+1)] & GrainType::MASK_TYPE;
-            buf[I(x, y+1)] = mark_done(type, turn);
-        } else if (x != 0
-                   && is_passable(buf[I(x-1, y+1)])) {
-            val = buf[I(x-1, y+1)];
-            buf[I(x-1, y+1)] = mark_done(type, turn);
-        } else if (x != n - 1
-                   && is_passable(buf[I(x+1, y+1)])) {
-            val = buf[I(x+1, y+1)];
-            buf[I(x+1, y+1)] = mark_done(type, turn);
-        }
+    if (is_passable(buf[I(x, y+1)])) {
+        val = buf[I(x, y+1)] & GrainType::MASK_TYPE;
+        buf[I(x, y+1)] = mark_done(type, turn);
+    } else if (x != 0
+               && is_passable(buf[I(x-1, y+1)])) {
+        val = buf[I(x-1, y+1)];
+        buf[I(x-1, y+1)] = mark_done(type, turn);
+    } else if (x != n - 1
+               && is_passable(buf[I(x+1, y+1)])) {
+        val = buf[I(x+1, y+1)];
+        buf[I(x+1, y+1)] = mark_done(type, turn);
     }
 }
 
 __device__ void gpu_update_waterlike(grain_t *buf, size_t n, size_t turn,
                                      int x, int y, grain_t &val) {
     const auto type = val & GrainType::MASK_TYPE;
-    if (y != n - 1 && is_type(buf[I(x, y+1)], GrainType::Blank)) {
+    if (is_type(buf[I(x, y+1)], GrainType::Blank)) {
         val = GrainType::Blank;
         buf[I(x, y+1)] = mark_done(type, turn);
-    } else if (y != n - 1 && x != 0
-               && is_type(buf[I(x-1, y+1)], GrainType::Blank)) {
+    } else if (is_type(buf[I(x-1, y+1)], GrainType::Blank)) {
         val = GrainType::Blank;
         buf[I(x-1, y+1)] = mark_done(type, turn);
-    } else if (y != n - 1 && x != n - 1
-               && is_type(buf[I(x+1, y+1)], GrainType::Blank)) {
+    } else if (is_type(buf[I(x+1, y+1)], GrainType::Blank)) {
         val = GrainType::Blank;
         buf[I(x+1, y+1)] = mark_done(type, turn);
-    } else if (x != 0
-               && is_type(buf[I(x-1, y)], GrainType::Blank)) {
+    } else if (is_type(buf[I(x-1, y)], GrainType::Blank)) {
         val = GrainType::Blank;
         buf[I(x-1, y)] = mark_done(type, turn);
-    } else if (x != n - 1
-               && is_type(buf[I(x+1, y)], GrainType::Blank)) {
+    } else if (is_type(buf[I(x+1, y)], GrainType::Blank)) {
         val = GrainType::Blank;
         buf[I(x+1, y)] = mark_done(type, turn);
     }
@@ -56,7 +50,8 @@ __device__ void gpu_update_waterlike(grain_t *buf, size_t n, size_t turn,
 __device__ void gpu_update_smokelike(grain_t* buf, size_t n, size_t turn,
                                      int x, int y, grain_t& val) {
     const auto type = val & GrainType::MASK_TYPE;
-    if(y == 0) {
+
+    if(y == 1) { // not 0 because of stone border
         val = GrainType::Blank;
     } else if(is_passable(buf[I(x, y-1)])) {
         val = buf[I(x, y-1)] & GrainType::MASK_TYPE;
@@ -82,8 +77,7 @@ __device__ void gpu_update_lava(grain_t* buf, size_t n, size_t turn,
         for(int dy=-1; dy<=1; dy++) {
             const auto nx = x + dx;
             const auto ny = y + dy;
-            if (nx >= 0 && nx < n - 1 && ny >= 0 && ny < n - 1
-                && is_type(buf[I(nx, ny)], GrainType::Water)) {
+            if (is_type(buf[I(nx, ny)], GrainType::Water)) {
                 val = GrainType::GrainType::Smoke;
                 buf[I(nx, ny)] = mark_done(GrainType::Smoke, turn);
                 done = true;
@@ -160,7 +154,9 @@ __global__ void gpu_sprinkle(grain_t *out, size_t n, grain_t value,
     //todo this is very suspicious maybe some overflows but we are compensating later
     auto x = start_x - sz/2 + blockIdx.x * blockDim.x + threadIdx.x;
     auto y = start_y - sz/2 + blockIdx.y * blockDim.y + threadIdx.y;
-    if(x < n && y < n && x < start_x + sz && y < start_y + sz) {
+
+    // note that we have to avoid touching the stone border
+    if(x > 0 && y > 0 && x < n-1 && y < n-1 && x < start_x + sz && y < start_y + sz) {
         auto dx = start_x - x;
         auto dy = start_y - y;
 

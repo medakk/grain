@@ -29,10 +29,11 @@ public:
     static const grain_t Water     = 0x03;
     static const grain_t Lava      = 0x04;
     static const grain_t Smoke     = 0x05;
-    static const grain_t Debug0    = 0x06;
-    static const grain_t Debug1    = 0x07;
-    static const grain_t Debug2    = 0x08;
-    static const grain_t Debug3    = 0x09;
+    static const grain_t Stone     = 0x06;
+    static const grain_t Debug0    = 0x07;
+    static const grain_t Debug1    = 0x08;
+    static const grain_t Debug2    = 0x09;
+    static const grain_t Debug3    = 0x0a;
 
     static const size_t MAX_TYPES = 32;
 
@@ -45,6 +46,7 @@ public:
             0xff0086cc, // Water
             0xfff55545, // Lava
             0xff765d59, // Smoke
+            0xff333333, // Stone
             0xff00ff00, // Debug0
             0xff00cc00, // Debug1
             0xff00aa00, // Debug2
