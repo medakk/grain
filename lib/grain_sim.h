@@ -20,6 +20,13 @@ public:
     // return the buffer as 4-channel image
     void as_color_image(GPUImage<uint32_t>&) const;
 
+    //////////////////////////////////
+    // Disable copying and assignment
+    GrainSim(const GrainSim &) = delete;
+    GrainSim &operator=(const GrainSim &) = delete;
+    GrainSim(GrainSim &&) = delete;
+    GrainSim &operator=(GrainSim &&) = delete;
+
 private:
     size_t m_N;
     size_t m_speed{1};
