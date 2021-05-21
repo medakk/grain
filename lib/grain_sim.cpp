@@ -21,6 +21,10 @@ GrainSim::GrainSim(size_t N_, size_t speed_, std::string init_filename_)
            GrainType::MAX_TYPES * sizeof(uint32_t));
 }
 
+GrainSim::~GrainSim() {
+    cuda_assert(cudaFree(m_color_map));
+}
+
 void GrainSim::init() {
     m_images[0].fill(grain::GrainType::Blank);
 

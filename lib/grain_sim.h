@@ -12,6 +12,7 @@ public:
     using ImageType = GPUImage<grain_t>;
 
     explicit GrainSim(size_t N_, size_t speed_ = 1, std::string init_filename_ = "");
+    ~GrainSim();
 
     const grain_t* update(EventData& event_data, bool verbose=true);
 
