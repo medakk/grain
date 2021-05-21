@@ -7,6 +7,9 @@
 
 namespace grain {
 
+// each thread operates on a THREAD_DIM x THREAD_DIM square
+const size_t THREAD_DIM = 2;
+
 __device__ void gpu_update_sandlike(grain_t* buf, size_t n, size_t turn,
                                     int x, int y, grain_t& val) {
     const auto type = val & GrainType::MASK_TYPE;
@@ -118,10 +121,10 @@ __global__ void gpu_slow_step(grain_t *buf, size_t n, grain_t turn) {
 }
 
 __global__ void gpu_step(grain_t* buf, size_t n, grain_t turn, int bx, int by) {
-    int sx = bx * 3 + blockIdx.x * blockDim.x * 6 + threadIdx.x * 6;
-    int sy = by * 3 + blockIdx.y * blockDim.y * 6 + threadIdx.y * 6;
-    for(int dx=0; dx<3; dx++) {
-        for(int dy=0; dy<3; dy++) {
+    int sx = bx * THREAD_DIM + blockIdx.x * blockDim.x * THREAD_DIM * 2 + threadIdx.x * THREAD_DIM * 2;
+    int sy = by * THREAD_DIM + blockIdx.y * blockDim.y * THREAD_DIM * 2 + threadIdx.y * THREAD_DIM * 2;
+    for(int dx=0; dx<THREAD_DIM; dx++) {
+        for(int dy=0; dy<THREAD_DIM; dy++) {
             auto x = sx + dx;
             auto y = sy + dy;
             if(x < n && y < n) {
@@ -137,8 +140,9 @@ __global__ void gpu_step(grain_t* buf, size_t n, grain_t turn, int bx, int by) {
                     col = GrainType::Debug3;
                 }
                 buf[x + y * n] = col;
-#endif
+#else
                 gpu_update_cell(buf, n, turn, x, y);
+#endif
             }
         }
     }
@@ -177,9 +181,9 @@ void GrainSim::step(const GrainSim::ImageType& in, GrainSim::ImageType& out) {
     out = in; // GPU-copy from in to out
 
     const size_t T = 16;
-    const size_t thirds = (m_N + 3 - 1) / 3;
+    const size_t divisions = (m_N + THREAD_DIM - 1) / THREAD_DIM;
     dim3 threadsPerBlock(T, T);
-    dim3 numBlocks((thirds + 2*T - 1) / (2 * T), (thirds + 2*T - 1) / (2 * T));
+    dim3 numBlocks((divisions + 2*T - 1) / (2 * T), (divisions + 2*T - 1) / (2 * T));
 
     // todo this is incorrect, we maybe wasting a full step on a noop. also this is a hack
     static_assert(GrainType::MASK_TURN == 0x80, "you changed MASK_TURN but forgot to fix this hack");
