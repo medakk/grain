@@ -16,9 +16,9 @@ public:
     // |             |
     // |             |
     // |             |
-    // |             |-> type(sand/water/etc)
+    // |             --> type(sand/water/etc)
     // |
-    // |-> turn indicator(0/1)
+    // --> turn indicator(0/1)
 
     static const grain_t MASK_TYPE = 0x1f;
     static const grain_t MASK_TURN = 0x80;
