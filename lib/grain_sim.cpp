@@ -1,8 +1,25 @@
 #include <chrono>
+#include <utility>
 #include "grain_sim.h"
 #include "fmt/format.h"
 
 namespace grain {
+
+GrainSim::GrainSim(size_t N_, size_t speed_, std::string init_filename_)
+        : m_N(N_), m_speed(speed_),
+          m_init_filename(std::move(init_filename_)) {
+    // create two buffers for current state and previous state
+    for (int i = 0; i < 2; i++) {
+        m_images.emplace_back(m_N);
+    }
+
+    init();
+
+    // copy color map to GPU
+    cuda_assert(cudaMallocManaged(&m_color_map, GrainType::MAX_TYPES * sizeof(uint32_t)));
+    memcpy(m_color_map, GrainType::Colors,
+           GrainType::MAX_TYPES * sizeof(uint32_t));
+}
 
 void GrainSim::init() {
     m_images[0].fill(grain::GrainType::Blank);
@@ -62,11 +79,6 @@ const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
     }
 
     return image1.data();
-}
-
-GPUImage<uint32_t> GrainSim::as_color_image() const {
-    const auto& image = m_images[m_frame_count % 2];
-    return image.as_type<uint32_t>();
 }
 
 void GrainSim::handle_brush_events(GrainSim::ImageType& image, EventData& event_data) {

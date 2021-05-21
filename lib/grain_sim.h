@@ -11,21 +11,13 @@ class GrainSim {
 public:
     using ImageType = GPUImage<grain_t>;
 
-    GrainSim(size_t N_, size_t speed_ = 1, const std::string &init_filename_ = "")
-            : m_N(N_), m_speed(speed_), m_init_filename(init_filename_) {
-        // create two buffers for current state and previous state
-        for(int i=0; i<2; i++) {
-            m_images.emplace_back(m_N);
-        }
-
-        init();
-    }
+    explicit GrainSim(size_t N_, size_t speed_ = 1, std::string init_filename_ = "");
 
     const grain_t* update(EventData& event_data, bool verbose=true);
 
     // todo return the buffer as 4-channel image. should be removed after implemented in shader
     // return the buffer as 4-channel image
-    GPUImage<uint32_t> as_color_image() const;
+    void as_color_image(GPUImage<uint32_t>&) const;
 
 private:
     size_t m_N;
@@ -34,6 +26,8 @@ private:
     size_t m_frame_count{0};
     size_t m_brush_idx{1}; // index for the current user-selected brush
     std::string m_init_filename{};
+
+    uint32_t *m_color_map{nullptr};
 
     // could be static, but that's a pain...
     std::array<grain_t, 5> m_brushes{

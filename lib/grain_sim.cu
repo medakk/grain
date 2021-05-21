@@ -162,6 +162,16 @@ __global__ void gpu_sprinkle(grain_t *out, size_t n, grain_t value,
     }
 }
 
+__global__ void gpu_as_color_image(const grain_t *in, uint32_t *out,
+                                   size_t n, const uint32_t *map) {
+    auto x = blockIdx.x * blockDim.x + threadIdx.x;
+    auto y = blockIdx.y * blockDim.y + threadIdx.y;
+    if(x < n && y < n) {
+        auto idx = x + y * n;
+        out[idx] = map[in[idx] & GrainType::MASK_TYPE];
+    }
+}
+
 void GrainSim::step(const GrainSim::ImageType& in, GrainSim::ImageType& out) {
     // todo find better way to do double buffer
     out = in; // GPU-copy from in to out
@@ -195,6 +205,20 @@ void GrainSim::sprinkle(GrainSim::ImageType &image, grain_t value,
                                                  x+sz/2, y+sz/2, sz);
 
     cuda_assert(cudaPeekAtLastError());
-
 }
+
+
+void GrainSim::as_color_image(GPUImage<uint32_t>& image_out) const {
+    const auto& image_in = m_images[(m_frame_count+1) % 2];
+    assert(image_in.width() == image_out.width() && image_in.height() == image_out.height());
+
+    const size_t n_threads = 16;
+    dim3 threadsPerBlock(n_threads, n_threads);
+    dim3 numBlocks((m_N + n_threads - 1) / n_threads, (m_N + n_threads - 1) / n_threads);
+
+    static_assert(GrainType::MASK_TYPE == 0x1f, "you changed mask type but didn't verify if the color stuff still works");
+    gpu_as_color_image<<<numBlocks, threadsPerBlock>>>(image_in.data(), image_out.data(),
+                                                       m_N, m_color_map);
+}
+
 }

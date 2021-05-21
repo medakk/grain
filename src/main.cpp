@@ -63,7 +63,8 @@ int main(int argc, char *argv[]) {
     // create renderer and start update loop
     grain::MiniFBRenderer::start([&]() {
         grain_sim.update(event_data, options.verbose);
-        display_image = grain_sim.as_color_image();
+        grain_sim.as_color_image(display_image);
+        display_image.sync();
         return display_image.data();
     }, event_data, options.N, options.N);
 

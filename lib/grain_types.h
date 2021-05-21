@@ -10,22 +10,46 @@ using grain_t = uint8_t;
 class GrainType {
 public:
 
-    // a hack for now, use the rightmost bit to store whether this cell has been
-    // updated or not
-    static const grain_t MASK_TYPE = 0x7f;
+    // Byte layout:
+    // x  x  x  x  x  x  x  x
+    // |       |_____________|
+    // |             |
+    // |             |
+    // |             |
+    // |             |-> type(sand/water/etc)
+    // |
+    // |-> turn indicator(0/1)
+
+    static const grain_t MASK_TYPE = 0x1f;
     static const grain_t MASK_TURN = 0x80;
 
-    static const grain_t Undefined = 0xff & MASK_TYPE;
-    static const grain_t Blank     = 0x44 & MASK_TYPE;
-    static const grain_t Sand      = 0x5c & MASK_TYPE;
-    static const grain_t Water     = 0xf7 & MASK_TYPE;
-    static const grain_t Lava      = 0x16 & MASK_TYPE;
-    static const grain_t Smoke     = 0x33 & MASK_TYPE;
+    static const grain_t Undefined = 0x00;
+    static const grain_t Blank     = 0x01;
+    static const grain_t Sand      = 0x02;
+    static const grain_t Water     = 0x03;
+    static const grain_t Lava      = 0x04;
+    static const grain_t Smoke     = 0x05;
+    static const grain_t Debug0    = 0x06;
+    static const grain_t Debug1    = 0x07;
+    static const grain_t Debug2    = 0x08;
+    static const grain_t Debug3    = 0x09;
 
-    static const grain_t Debug0    = 0x05 & MASK_TYPE;
-    static const grain_t Debug1    = 0x0a & MASK_TYPE;
-    static const grain_t Debug2    = 0x0d & MASK_TYPE;
-    static const grain_t Debug3    = 0x08 & MASK_TYPE;
+    static const size_t MAX_TYPES = 32;
+
+    // this has to be defined in the correct order. would be nice to look into a constexpr
+    // way to keep everything organized. or a macro
+    static constexpr uint32_t Colors[MAX_TYPES] = {
+            0xffff00ff, // Undefined
+            0xff444444, // Blank
+            0xffc4a75c, // Sand
+            0xff20acf7, // Water
+            0xff9e2416, // Lava
+            0xff3f3b33, // Smoke
+            0xff00ff00, // Debug0
+            0xff00cc00, // Debug1
+            0xff00aa00, // Debug2
+            0xff005500, // Debug3
+    };
 };
 
 struct EventData {
