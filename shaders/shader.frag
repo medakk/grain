@@ -1,8 +1,9 @@
-#version 130
+#version 330 core
 
-varying vec2 uv;
+in vec2 uv;
+out vec4 FragColor;
 
-uniform usampler2D mainTex;
+uniform usampler2D uMainTex;
 
 const uint COLORS[11] = uint[11](
     0xffff00ffu, // Undefined
@@ -20,13 +21,12 @@ const uint COLORS[11] = uint[11](
 
 void main()
 {
-    uint raw = texture(mainTex, vec2(uv.x, 1.0 - uv.y)).r;
+    uint raw = texture(uMainTex, vec2(uv.x, 1.0 - uv.y)).r;
     raw &= 0x1fu;
     uint ucolor = COLORS[raw];
     float r = float((ucolor & 0x00ff0000u) >> 16) / 255.0;
     float g = float((ucolor & 0x0000ff00u) >>  8) / 255.0;
     float b = float((ucolor & 0x000000ffu) >>  0) / 255.0;
 
-    // float c = float(raw) / 8.0f;
-    gl_FragColor = vec4(r, g, b, 1.0);
+    FragColor = vec4(r, g, b, 1.0);
 }

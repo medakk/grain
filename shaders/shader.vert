@@ -1,13 +1,14 @@
-#version 130
+#version 330 core
 
-uniform mat4 MVP;
-attribute vec2 vUV;
-attribute vec2 vPos;
+layout (location=0) in vec2 inPos;
+layout (location=1) in vec2 inUV;
 
-varying vec2 uv;
+out vec2 uv;
+
+uniform mat4 uMVP;
 
 void main()
 {
-    gl_Position = MVP * vec4(vPos, 0.0, 1.0);
-    uv = vUV;
+    gl_Position = uMVP * vec4(inPos, 0.0, 1.0);
+    uv = inUV;
 }

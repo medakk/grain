@@ -62,8 +62,9 @@ public:
             exit(EXIT_FAILURE);
         }
 
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
         window = glfwCreateWindow(800, 800, "grain", nullptr, nullptr);
         if (!window) {
@@ -110,16 +111,32 @@ public:
         glAttachShader(program, fragment_shader);
         glLinkProgram(program);
 
-        mvp_location = glGetUniformLocation(program, "MVP");
-        vpos_location = glGetAttribLocation(program, "vPos");
-        vuv_location = glGetAttribLocation(program, "vUV");
+        mvp_location = glGetUniformLocation(program, "uMVP");
 
-        glEnableVertexAttribArray(vpos_location);
-        glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
-                              sizeof(vertices[0]), (void*) 0);
-        glEnableVertexAttribArray(vuv_location);
-        glVertexAttribPointer(vuv_location, 2, GL_FLOAT, GL_FALSE,
-                              sizeof(vertices[0]), (void*) (sizeof(float) * 2));
+
+        // from https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.3.hello_triangle_exercise1/hello_triangle_exercise1.cpp
+        unsigned int VBO, VAO;
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+        glBindVertexArray(VAO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
+                              4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
+                              4 * sizeof(float), (void*) (sizeof(float) * 2));
+        glEnableVertexAttribArray(1);
+
+        // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+        // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+        glBindVertexArray(0);
 
         /////////////////////////////
         // Texture stuff
@@ -135,7 +152,7 @@ public:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glBindTexture(GL_TEXTURE_2D, 0);
-        // GLint main_tex_location = glGetUniformLocation(program, "mainTex");
+        // GLint main_tex_location = glGetUniformLocation(program, "uMainTex");
         // glUniform1i(main_tex_location, textureID);
 
         /////////////////////////////
@@ -168,6 +185,9 @@ public:
             mat4x4_mul(mvp, p, m);
 
             glUseProgram(program);
+            glBindVertexArray(VAO);
+
+
             glBindTexture(GL_TEXTURE_2D, textureID);
             // todo: this is probably doing GPU->CPU->GPU copy
             glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h,
