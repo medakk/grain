@@ -1,4 +1,3 @@
-#include <chrono>
 #include <utility>
 #include "grain_sim.h"
 #include "fmt/format.h"
@@ -55,18 +54,16 @@ const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
     }
 
     if(!event_data.paused) {
-        using namespace std::chrono;
-        const auto start_time = system_clock::now();
+        Timer timer;
 
         // perform update
         step();
         m_image.sync();
 
-        const auto end_time = system_clock::now();
-        const double elapsed_seconds = duration_cast<duration<double>>(
-                end_time - start_time).count();
         if(verbose) {
-            fmt::print("[F: {:7}] [iter_time:  {:.6}ms] \n", m_frame_count, elapsed_seconds*1000.0);
+            const double t = timer.elapsed();
+            fmt::print("[F: {:7}] [iter_time:  {:6g}ms / {:6g}its/s] \n",
+                       m_frame_count, t*1000.0, 1.0 / t);
         }
     }
 

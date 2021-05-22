@@ -96,8 +96,7 @@ public:
         /////////////////////////////
         // Main loop
         while (!glfwWindowShouldClose(m_window)) {
-            using namespace std::chrono;
-            const auto start_time = system_clock::now();
+            Timer timer;
 
             int window_width, window_height;
             glfwGetFramebufferSize(m_window, &window_width, &window_height);
@@ -134,17 +133,15 @@ public:
             glDisable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, 0);
 
-
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
             glfwSwapBuffers(m_window);
             glfwPollEvents();
 
-            const auto end_time = system_clock::now();
-            const double elapsed_seconds = duration_cast<duration<double>>(
-                    end_time - start_time).count();
             if(verbose) {
-                fmt::print("             [total_time: {:.6}ms] \n", elapsed_seconds*1000.0);
+                const double t = timer.elapsed();
+                fmt::print("             [total_time: {:6g}ms / {:6g}its/s] \n",
+                           t*1000.0, 1.0 / t);
             }
         }
     }
