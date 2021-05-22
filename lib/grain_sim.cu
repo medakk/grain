@@ -16,12 +16,10 @@ __device__ void gpu_update_sandlike(grain_t* buf, size_t n, size_t turn,
     if (is_passable(buf[I(x, y+1)])) {
         val = buf[I(x, y+1)] & GrainType::MASK_TYPE;
         buf[I(x, y+1)] = mark_done(type, turn);
-    } else if (x != 0
-               && is_passable(buf[I(x-1, y+1)])) {
+    } else if (is_passable(buf[I(x-1, y+1)])) {
         val = buf[I(x-1, y+1)];
         buf[I(x-1, y+1)] = mark_done(type, turn);
-    } else if (x != n - 1
-               && is_passable(buf[I(x+1, y+1)])) {
+    } else if (is_passable(buf[I(x+1, y+1)])) {
         val = buf[I(x+1, y+1)];
         buf[I(x+1, y+1)] = mark_done(type, turn);
     }
