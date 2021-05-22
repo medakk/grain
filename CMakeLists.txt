@@ -22,6 +22,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw)
 set(GRAIN_GLAD_INCLUDE_DIR deps/glfw/deps/)
 set(GRAIN_GLAD_SRC_FILES deps/glfw/deps/glad_gl.c)
 
+# Find imgui
+add_subdirectory(deps/imgui)
+
 # Find google benchmark
 if(GRAIN_BENCHMARK)
     option(BENCHMARK_ENABLE_GTEST_TESTS "" OFF)
@@ -29,7 +32,7 @@ if(GRAIN_BENCHMARK)
 endif()
 
 # List of dependencies to link to that are common for all targets
-set(GRAIN_DEPS glfw fmt::fmt CUDA::cudart CUDA::cuda_driver)
+set(GRAIN_DEPS glfw imgui fmt::fmt CUDA::cudart CUDA::cuda_driver)
 
 ###########################
 # Build library grain_lib
