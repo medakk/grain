@@ -182,8 +182,8 @@ __global__ void gpu_as_color_image(const grain_t *in, uint32_t *out,
 void GrainSim::step() {
     const size_t T = 16;
     const size_t divisions = (m_N + THREAD_DIM - 1) / THREAD_DIM;
-    dim3 threadsPerBlock(T, T);
-    dim3 numBlocks((divisions + 2*T - 1) / (2 * T), (divisions + 2*T - 1) / (2 * T));
+    dim3 block(T, T);
+    dim3 grid((divisions + 2*T - 1) / (2 * T), (divisions + 2*T - 1) / (2 * T));
 
     // todo this is incorrect, we maybe wasting a full step on a noop. also this is a hack
     static_assert(GrainType::MASK_TURN == 0x80, "you changed MASK_TURN but forgot to fix this hack");
@@ -192,10 +192,10 @@ void GrainSim::step() {
     for(size_t i=0; i<m_speed; i++) {
         turn ^= GrainType::MASK_TURN;
         // gpu_slow_step<<<1, 1>>>(m_image.data(), m_N, turn);
-        gpu_step<<<numBlocks, threadsPerBlock>>>(m_image.data(), m_N, turn, 0, 0);
-        gpu_step<<<numBlocks, threadsPerBlock>>>(m_image.data(), m_N, turn, 0, 1);
-        gpu_step<<<numBlocks, threadsPerBlock>>>(m_image.data(), m_N, turn, 1, 0);
-        gpu_step<<<numBlocks, threadsPerBlock>>>(m_image.data(), m_N, turn, 1, 1);
+        gpu_step<<<grid, block>>>(m_image.data(), m_N, turn, 0, 0);
+        gpu_step<<<grid, block>>>(m_image.data(), m_N, turn, 0, 1);
+        gpu_step<<<grid, block>>>(m_image.data(), m_N, turn, 1, 0);
+        gpu_step<<<grid, block>>>(m_image.data(), m_N, turn, 1, 1);
     }
 
     cuda_assert(cudaPeekAtLastError());
@@ -203,9 +203,9 @@ void GrainSim::step() {
 
 void GrainSim::sprinkle(GrainSim::ImageType &image, grain_t value,
                         size_t x, size_t y, size_t sz) {
-    dim3 threadsPerBlock(16, 16);
-    dim3 numBlocks((sz + 16 - 1)/16, (sz + 16 - 1)/16);
-    gpu_sprinkle<<<numBlocks, threadsPerBlock>>>(image.data(), image.width(), value,
+    dim3 block(16, 16);
+    dim3 grid((sz + 16 - 1)/16, (sz + 16 - 1)/16);
+    gpu_sprinkle<<<grid, block>>>(image.data(), image.width(), value,
                                                  x+sz/2, y+sz/2, sz);
 
     cuda_assert(cudaPeekAtLastError());
@@ -216,11 +216,11 @@ void GrainSim::as_color_image(GPUImage<uint32_t>& image_out) const {
     assert(m_image.width() == image_out.width() && m_image.height() == image_out.height());
 
     const size_t n_threads = 16;
-    dim3 threadsPerBlock(n_threads, n_threads);
-    dim3 numBlocks((m_N + n_threads - 1) / n_threads, (m_N + n_threads - 1) / n_threads);
+    dim3 block(n_threads, n_threads);
+    dim3 grid((m_N + n_threads - 1) / n_threads, (m_N + n_threads - 1) / n_threads);
 
     static_assert(GrainType::MASK_TYPE == 0x1f, "you changed mask type but didn't verify if the color stuff still works");
-    gpu_as_color_image<<<numBlocks, threadsPerBlock>>>(m_image.data(), image_out.data(),
+    gpu_as_color_image<<<grid, block>>>(m_image.data(), image_out.data(),
                                                        m_N, m_color_map);
 }
 

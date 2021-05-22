@@ -54,9 +54,9 @@ __global__ void gpu_count(T *buf, size_t n, T val, int* out) {
 template<typename T>
 void GPUImage<T>::fill(T val) {
     const size_t n_threads = 16;
-    dim3 threadsPerBlock(n_threads, n_threads);
-    dim3 numBlocks((m_N + n_threads - 1) / n_threads, (m_N + n_threads - 1) / n_threads);
-    gpu_fill<<<numBlocks, threadsPerBlock>>>(m_data, m_N, val);
+    dim3 block(n_threads, n_threads);
+    dim3 grid((m_N + n_threads - 1) / n_threads, (m_N + n_threads - 1) / n_threads);
+    gpu_fill<<<grid, block>>>(m_data, m_N, val);
 
     cuda_assert(cudaPeekAtLastError());
 }
@@ -64,10 +64,10 @@ void GPUImage<T>::fill(T val) {
 template<typename T>
 void GPUImage<T>::fill(size_t start_x, size_t start_y, size_t w, size_t h, T val) {
     const size_t n_threads = 16;
-    dim3 threadsPerBlock(n_threads, n_threads);
-    dim3 numBlocks((w + n_threads - 1) / n_threads, (h + n_threads - 1) / n_threads);
+    dim3 block(n_threads, n_threads);
+    dim3 grid((w + n_threads - 1) / n_threads, (h + n_threads - 1) / n_threads);
 
-    gpu_fill_block<<<numBlocks, threadsPerBlock>>>(m_data, m_N,
+    gpu_fill_block<<<grid, block>>>(m_data, m_N,
                                                    start_x, start_y, w, h,
                                                    val);
 
@@ -77,14 +77,14 @@ void GPUImage<T>::fill(size_t start_x, size_t start_y, size_t w, size_t h, T val
 template<typename T>
 size_t GPUImage<T>::count(T val) const {
     const size_t n_threads = 16;
-    dim3 threadsPerBlock(n_threads, n_threads);
-    dim3 numBlocks((m_N + n_threads - 1) / n_threads, (m_N + n_threads - 1) / n_threads);
+    dim3 block(n_threads, n_threads);
+    dim3 grid((m_N + n_threads - 1) / n_threads, (m_N + n_threads - 1) / n_threads);
 
     int* d_out;
     cuda_assert(cudaMallocManaged(&d_out, sizeof(int)));
     *d_out = 0;
 
-    gpu_count<<<numBlocks, threadsPerBlock>>>(m_data, m_N, val, d_out);
+    gpu_count<<<grid, block>>>(m_data, m_N, val, d_out);
 
     cuda_assert(cudaPeekAtLastError());
     cuda_assert(cudaDeviceSynchronize());
@@ -100,10 +100,10 @@ GPUImage<S> GPUImage<T>::as_type() const {
     GPUImage<S> new_image(m_N);
 
     const size_t n_threads = 16;
-    dim3 threadsPerBlock(n_threads, n_threads);
-    dim3 numBlocks((m_N + n_threads - 1) / n_threads, (m_N + n_threads - 1) / n_threads);
+    dim3 block(n_threads, n_threads);
+    dim3 grid((m_N + n_threads - 1) / n_threads, (m_N + n_threads - 1) / n_threads);
 
-    gpu_as_type<<<numBlocks, threadsPerBlock>>>(m_data, new_image.data(), m_N);
+    gpu_as_type<<<grid, block>>>(m_data, new_image.data(), m_N);
 
     cuda_assert(cudaPeekAtLastError());
 
