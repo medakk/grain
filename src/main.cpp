@@ -58,8 +58,10 @@ int main(int argc, char *argv[]) {
     grain::EventData event_data;
     event_data.paused = options.start_paused;
 
+    grain::OpenGLRenderer renderer;
+
     // create renderer and start update loop
-    grain::OpenGLRenderer::start([&]() {
+    renderer.start([&]() {
         return grain_sim.update(event_data, options.verbose);
     }, event_data, options.N, options.N, options.verbose);
 

@@ -46,17 +46,13 @@ namespace grain {
 
 class OpenGLRenderer {
 public:
-    template<typename F>
-    static void start(F compute_buffer_func, EventData& event_data, int w, int h, bool verbose=false) {
-        // todo make whole thing neater
-
-        print_usage();
+    OpenGLRenderer() {
+        OpenGLRenderer::print_usage();
 
         /////////////////////////////
         // GLFW Setup
-        GLFWwindow* window;
-        GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-        GLint mvp_location, vpos_location, vuv_location;
+        GLuint vertex_buffer, vertex_shader, fragment_shader;
+        GLint vpos_location, vuv_location;
 
         glfwSetErrorCallback(glfw_error_callback);
 
@@ -68,17 +64,13 @@ public:
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-        window = glfwCreateWindow(800, 800, "grain", nullptr, nullptr);
-        if (!window) {
+        m_window = glfwCreateWindow(800, 800, "grain", nullptr, nullptr);
+        if (!m_window) {
             glfwTerminate();
             exit(EXIT_FAILURE);
         }
 
-        glfwSetWindowUserPointer(window, &event_data);
-        glfwSetKeyCallback(window, keyboard_callback);
-        glfwSetMouseButtonCallback(window, mouse_button_callback);
-
-        glfwMakeContextCurrent(window);
+        glfwMakeContextCurrent(m_window);
         gladLoadGL(glfwGetProcAddress);
         glfwSwapInterval(1);
 
@@ -108,20 +100,19 @@ public:
         glCompileShader(fragment_shader);
         check_shader(fragment_shader);
 
-        program = glCreateProgram();
-        glAttachShader(program, vertex_shader);
-        glAttachShader(program, fragment_shader);
-        glLinkProgram(program);
+        m_program = glCreateProgram();
+        glAttachShader(m_program, vertex_shader);
+        glAttachShader(m_program, fragment_shader);
+        glLinkProgram(m_program);
 
-        mvp_location = glGetUniformLocation(program, "uMVP");
-
+        m_loc_mvp = glGetUniformLocation(m_program, "uMVP");
 
         // from https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.3.hello_triangle_exercise1/hello_triangle_exercise1.cpp
-        unsigned int VBO, VAO;
-        glGenVertexArrays(1, &VAO);
+        unsigned int VBO;
+        glGenVertexArrays(1, &m_VAO);
         glGenBuffers(1, &VBO);
         // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-        glBindVertexArray(VAO);
+        glBindVertexArray(m_VAO);
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -133,72 +124,79 @@ public:
                               4 * sizeof(float), (void*) (sizeof(float) * 2));
         glEnableVertexAttribArray(1);
 
-        // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-        // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
         glBindVertexArray(0);
 
         /////////////////////////////
         // Texture stuff
 
         // Create one OpenGL texture
-        GLuint textureID;
-        glGenTextures(1, &textureID);
+        glGenTextures(1, &m_main_tex_id);
 
         // "Bind" the newly created texture : all future texture functions will modify this texture
-        glBindTexture(GL_TEXTURE_2D, textureID);
+        glBindTexture(GL_TEXTURE_2D, m_main_tex_id);
 
         // Give the image to OpenGL
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glBindTexture(GL_TEXTURE_2D, 0);
-        // GLint main_tex_location = glGetUniformLocation(program, "uMainTex");
+        // GLint main_tex_location = glGetUniformLocation(m_program, "uMainTex");
         // glUniform1i(main_tex_location, textureID);
+    }
+
+    ~OpenGLRenderer() {
+        // todo what else to clean up?
+        glfwDestroyWindow(m_window);
+        glfwTerminate();
+    }
+
+    template<typename F>
+    void start(F compute_buffer_func, EventData& event_data, int w, int h, bool verbose=false) {
+        glfwSetWindowUserPointer(m_window, &event_data);
+        glfwSetKeyCallback(m_window, keyboard_callback);
+        glfwSetMouseButtonCallback(m_window, mouse_button_callback);
 
         /////////////////////////////
         // Main loop
-        while (!glfwWindowShouldClose(window)) {
+        while (!glfwWindowShouldClose(m_window)) {
             using namespace std::chrono;
             const auto start_time = system_clock::now();
-            float ratio;
-            int width, height;
-            mat4x4 m, p, mvp;
 
-            glfwGetFramebufferSize(window, &width, &height);
-            ratio = width / (float) height;
+            int window_width, window_height;
+            glfwGetFramebufferSize(m_window, &window_width, &window_height);
+            const float ratio = window_width / (float) window_height;
 
             double xpos, ypos;
-            glfwGetCursorPos(window, &xpos, &ypos);
-            event_data.mouse_x = xpos / width;
-            event_data.mouse_y = ypos / height;
+            glfwGetCursorPos(m_window, &xpos, &ypos);
+            event_data.mouse_x = xpos / window_width;
+            event_data.mouse_y = ypos / window_height;
             event_data.mouse_x = std::clamp(event_data.mouse_x, 0.0f, 1.0f);
             event_data.mouse_y = std::clamp(event_data.mouse_y, 0.0f, 1.0f);
 
-            glViewport(0, 0, width, height);
+            glViewport(0, 0, window_width, window_height);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            const auto data = compute_buffer_func();
-
+            mat4x4 m, p, mvp;
             mat4x4_identity(m);
             mat4x4_translate(p, 0.0, 0.0, 5.0);
             // mat4x4_rotate_Z(m, m, (float) glfwGetTime());
             mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
             mat4x4_mul(mvp, p, m);
 
-            glUseProgram(program);
-            glBindVertexArray(VAO);
+            glUseProgram(m_program);
+            glBindVertexArray(m_VAO);
 
+            glBindTexture(GL_TEXTURE_2D, m_main_tex_id);
 
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            // todo: this is probably doing GPU->CPU->GPU copy
+            const auto data = compute_buffer_func();
             glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h,
                          0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, data);
-            glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
+
+            glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, (const GLfloat*) mvp);
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            glfwSwapBuffers(window);
+            glfwSwapBuffers(m_window);
             glfwPollEvents();
 
             const auto end_time = system_clock::now();
@@ -208,13 +206,13 @@ public:
                 fmt::print("             [total_time: {:.6}ms] \n", elapsed_seconds*1000.0);
             }
         }
-
-        glfwDestroyWindow(window);
-
-        glfwTerminate();
     }
 
 private:
+    GLFWwindow* m_window;
+    int m_loc_mvp;
+    uint m_program, m_VAO, m_main_tex_id;
+
     static constexpr struct {
         float x, y;
         float u, v;
