@@ -114,6 +114,7 @@ public:
 
             glBindTexture(GL_TEXTURE_2D, m_main_tex_id);
 
+            //TODO use PBO so that cuda and opengl share memory
             const auto data = compute_buffer_func();
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h,
                          0, GL_BGRA, GL_UNSIGNED_BYTE, data);
