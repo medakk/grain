@@ -46,13 +46,8 @@ namespace grain {
 
 class OpenGLRenderer {
 public:
-    OpenGLRenderer() {
+    OpenGLRenderer(int width, int height) {
         OpenGLRenderer::print_usage();
-
-        /////////////////////////////
-        // GLFW Setup
-        GLuint vertex_buffer, vertex_shader, fragment_shader;
-        GLint vpos_location, vuv_location;
 
         glfwSetErrorCallback(glfw_error_callback);
 
@@ -60,11 +55,10 @@ public:
             exit(EXIT_FAILURE);
         }
 
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-        m_window = glfwCreateWindow(800, 800, "grain", nullptr, nullptr);
+        m_window = glfwCreateWindow(width, height, "grain", nullptr, nullptr);
         if (!m_window) {
             glfwTerminate();
             exit(EXIT_FAILURE);
@@ -74,75 +68,17 @@ public:
         gladLoadGL(glfwGetProcAddress);
         glfwSwapInterval(1);
 
-        /////////////////////////////
-        // OpenGL Setup
-        const auto vertex_shader_text = load_text_file("../shaders/shader.vert");
-        const auto fragment_shader_text = load_text_file("../shaders/shader.frag");
-
         // During init, enable debug output
         glEnable(GL_DEBUG_OUTPUT);
         glDebugMessageCallback(gl_error_callback, nullptr);
 
-        glGenBuffers(1, &vertex_buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-        const char *vertex_sources[] = { vertex_shader_text.c_str() };
-        glShaderSource(vertex_shader, 1, vertex_sources, nullptr);
-        glCompileShader(vertex_shader);
-        check_shader(vertex_shader);
-
-
-        fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-        const char *fragment_sources[] = { fragment_shader_text.c_str() };
-        glShaderSource(fragment_shader, 1, fragment_sources, nullptr);
-        glCompileShader(fragment_shader);
-        check_shader(fragment_shader);
-
-        m_program = glCreateProgram();
-        glAttachShader(m_program, vertex_shader);
-        glAttachShader(m_program, fragment_shader);
-        glLinkProgram(m_program);
-
-        m_loc_mvp = glGetUniformLocation(m_program, "uMVP");
-
-        // from https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/2.3.hello_triangle_exercise1/hello_triangle_exercise1.cpp
-        unsigned int VBO;
-        glGenVertexArrays(1, &m_VAO);
-        glGenBuffers(1, &VBO);
-        // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-        glBindVertexArray(m_VAO);
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
-                              4 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
-                              4 * sizeof(float), (void*) (sizeof(float) * 2));
-        glEnableVertexAttribArray(1);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        glBindVertexArray(0);
-
         /////////////////////////////
         // Texture stuff
-
-        // Create one OpenGL texture
         glGenTextures(1, &m_main_tex_id);
-
-        // "Bind" the newly created texture : all future texture functions will modify this texture
         glBindTexture(GL_TEXTURE_2D, m_main_tex_id);
-
-        // Give the image to OpenGL
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glBindTexture(GL_TEXTURE_2D, 0);
-        // GLint main_tex_location = glGetUniformLocation(m_program, "uMainTex");
-        // glUniform1i(main_tex_location, textureID);
     }
 
     ~OpenGLRenderer() {
@@ -165,7 +101,6 @@ public:
 
             int window_width, window_height;
             glfwGetFramebufferSize(m_window, &window_width, &window_height);
-            const float ratio = window_width / (float) window_height;
 
             double xpos, ypos;
             glfwGetCursorPos(m_window, &xpos, &ypos);
@@ -177,23 +112,28 @@ public:
             glViewport(0, 0, window_width, window_height);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            mat4x4 m, p, mvp;
-            mat4x4_identity(m);
-            mat4x4_translate(p, 0.0, 0.0, 5.0);
-            // mat4x4_rotate_Z(m, m, (float) glfwGetTime());
-            mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-            mat4x4_mul(mvp, p, m);
-
-            glUseProgram(m_program);
-            glBindVertexArray(m_VAO);
-
             glBindTexture(GL_TEXTURE_2D, m_main_tex_id);
 
             const auto data = compute_buffer_func();
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, w, h,
-                         0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h,
+                         0, GL_BGRA, GL_UNSIGNED_BYTE, data);
+            glEnable(GL_TEXTURE_2D);
 
-            glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, (const GLfloat*) mvp);
+            glBegin(GL_QUADS);
+            glTexCoord2f(0, 1);
+            glVertex2f(-1, -1);
+            glTexCoord2f(1, 1);
+            glVertex2f(1, -1);
+            glTexCoord2f(1, 0);
+            glVertex2f(1, 1);
+            glTexCoord2f(0, 0);
+            glVertex2f(-1, 1);
+            glEnd();
+
+            glDisable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
             glfwSwapBuffers(m_window);
@@ -210,8 +150,7 @@ public:
 
 private:
     GLFWwindow* m_window;
-    int m_loc_mvp;
-    uint m_program, m_VAO, m_main_tex_id;
+    uint m_main_tex_id;
 
     static constexpr struct {
         float x, y;

@@ -8,6 +8,7 @@
 struct Options {
     size_t N{256};
     size_t speed{1};
+    size_t resolution{800};
     bool start_paused{false};
     bool verbose{false};
     std::string init_filename{};
@@ -18,6 +19,8 @@ Options parse_args(int argc, char *argv[]) {
     options.add_options()
             ("n,world-size", "size of world",
              cxxopts::value<int>()->default_value("256"))
+            ("r,resolution", "render resolution(square)",
+             cxxopts::value<int>()->default_value("800"))
             ("s,speed", "number of iterations to run per update",
              cxxopts::value<int>()->default_value("1"))
             ("p,start-paused", "start with simulation paused. <space> to resume",
@@ -36,6 +39,7 @@ Options parse_args(int argc, char *argv[]) {
 
     Options ret;
     ret.N = result["n"].as<int>();
+    ret.resolution = result["resolution"].as<int>();
     ret.speed = result["speed"].as<int>();
     ret.start_paused = result["start-paused"].as<bool>();
     ret.init_filename = result["init-filename"].as<std::string>();
@@ -58,12 +62,15 @@ int main(int argc, char *argv[]) {
     grain::EventData event_data;
     event_data.paused = options.start_paused;
 
-    grain::OpenGLRenderer renderer;
+    grain::GPUImage<uint32_t> display_image(options.resolution);
+    grain::OpenGLRenderer renderer(options.resolution, options.resolution);
 
     // create renderer and start update loop
     renderer.start([&]() {
-        return grain_sim.update(event_data, options.verbose);
-    }, event_data, options.N, options.N, options.verbose);
+        grain_sim.update(event_data, options.verbose);
+        grain_sim.as_color_image(display_image);
+        return display_image.data();
+    }, event_data, options.resolution, options.resolution, options.verbose);
 
     return 0;
 }

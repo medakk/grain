@@ -169,13 +169,19 @@ __global__ void gpu_sprinkle(grain_t *out, size_t n, grain_t value,
     }
 }
 
-__global__ void gpu_as_color_image(const grain_t *in, uint32_t *out,
-                                   size_t n, const uint32_t *map) {
-    auto x = blockIdx.x * blockDim.x + threadIdx.x;
-    auto y = blockIdx.y * blockDim.y + threadIdx.y;
-    if(x < n && y < n) {
-        auto idx = I(x, y);
-        out[idx] = map[in[idx] & GrainType::MASK_TYPE];
+__global__ void gpu_as_color_image(const grain_t *in, size_t in_n,
+                                   uint32_t *out, size_t out_n,
+                                   const uint32_t *map) {
+    auto out_x = blockIdx.x * blockDim.x + threadIdx.x;
+    auto out_y = blockIdx.y * blockDim.y + threadIdx.y;
+    if(out_x < out_n && out_y < out_n) {
+        // nearest neighbor interpolation to find source coord
+        int in_x = (out_x / (float)out_n) * (in_n - 1);
+        int in_y = (out_y / (float)out_n) * (in_n - 1);
+
+        auto in_idx = I_n(in_x, in_y, in_n);
+        auto out_idx = I_n(out_x, out_y, out_n);
+        out[out_idx] = map[in[in_idx] & GrainType::MASK_TYPE];
     }
 }
 
@@ -213,15 +219,17 @@ void GrainSim::sprinkle(GrainSim::ImageType &image, grain_t value,
 
 
 void GrainSim::as_color_image(GPUImage<uint32_t>& image_out) const {
-    assert(m_image.width() == image_out.width() && m_image.height() == image_out.height());
+    assert(image_out.width() == image_out.height());
 
     const size_t n_threads = 16;
+    const size_t out_size = image_out.width();
     dim3 block(n_threads, n_threads);
-    dim3 grid((m_N + n_threads - 1) / n_threads, (m_N + n_threads - 1) / n_threads);
+    dim3 grid((out_size + n_threads - 1) / n_threads, (out_size + n_threads - 1) / n_threads);
 
     static_assert(GrainType::MASK_TYPE == 0x1f, "you changed mask type but didn't verify if the color stuff still works");
-    gpu_as_color_image<<<grid, block>>>(m_image.data(), image_out.data(),
-                                                       m_N, m_color_map);
+    gpu_as_color_image<<<grid, block>>>(m_image.data(), m_N,
+                                        image_out.data(), out_size,
+                                        m_color_map);
 }
 
 }

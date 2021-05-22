@@ -9,6 +9,7 @@
 
 // shorthand for indexing
 #define I(x, y) (x) + (y) * n
+#define I_n(x, y, n) (x) + (y) * (n)
 
 template<class IteratorType>
 void print_arr(IteratorType it, IteratorType end, char end_ch='\n') {
