@@ -60,6 +60,7 @@ const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
 
         // perform update
         step();
+        m_image.sync();
 
         const auto end_time = system_clock::now();
         const double elapsed_seconds = duration_cast<duration<double>>(
@@ -70,8 +71,6 @@ const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
     }
 
     handle_brush_events(event_data);
-
-    m_image.sync();
 
     if(event_data.screenshot) {
         m_image.write_png("screenshot.png");
@@ -103,6 +102,7 @@ void GrainSim::handle_brush_events(EventData& event_data) {
         const size_t y = event_data.mouse_y * (m_N - 1) - sz / 2.0;
         const auto brush = m_brushes[m_brush_idx];
         sprinkle(m_image, brush, x, y, sz);
+        m_image.sync();
     }
 }
 
