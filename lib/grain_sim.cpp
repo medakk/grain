@@ -40,7 +40,7 @@ void GrainSim::init() {
     m_image.sync();
 }
 
-const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
+const grain_t* GrainSim::update(EventData& event_data) {
     if(!event_data.paused) {
         m_frame_count++;
     }
@@ -60,8 +60,9 @@ const grain_t* GrainSim::update(EventData& event_data, bool verbose) {
         step();
         m_image.sync();
 
-        if(verbose) {
-            const double t = timer.elapsed();
+        m_stats.last_update_time = timer.elapsed();
+        if(m_verbose) {
+            const double t = m_stats.last_update_time;
             fmt::print("[F: {:7}] [iter_time:  {:6g}ms / {:6g}its/s] \n",
                        m_frame_count, t*1000.0, 1.0 / t);
         }

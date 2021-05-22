@@ -59,18 +59,17 @@ int main(int argc, char *argv[]) {
     }
 
     grain::GrainSim grain_sim(options.N, options.speed, options.init_filename);
+    grain_sim.set_verbose(options.verbose);
+
     grain::EventData event_data;
     event_data.paused = options.start_paused;
 
-    grain::GPUImage<uint32_t> display_image(options.resolution);
     grain::OpenGLRenderer renderer(options.resolution, options.resolution);
 
     // create renderer and start update loop
-    renderer.start([&]() {
-        grain_sim.update(event_data, options.verbose);
-        grain_sim.as_color_image(display_image);
-        return display_image.data();
-    }, event_data, options.resolution, options.resolution, options.verbose);
+    renderer.start(grain_sim , event_data,
+                   options.resolution, options.resolution,
+                   options.verbose);
 
     return 0;
 }

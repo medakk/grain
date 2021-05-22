@@ -11,9 +11,10 @@ static void BM_Scenario00(benchmark::State& state) {
     grain::EventData event_data{};
 
     const bool verbose = false;
+    grain_sim.set_verbose(verbose);
     for(auto _ : state) {
         for(int i=0; i<100; i++) {
-            grain_sim.update(event_data, verbose);
+            grain_sim.update(event_data);
         }
     }
 }
@@ -26,9 +27,10 @@ static void BM_HomogenousLava(benchmark::State& state) {
     grain::EventData event_data{};
 
     const bool verbose = false;
+    grain_sim.set_verbose(verbose);
     for(auto _ : state) {
         for(int i=0; i<100; i++) {
-            grain_sim.update(event_data, verbose);
+            grain_sim.update(event_data);
         }
     }
 }
@@ -41,9 +43,10 @@ static void BM_HomogenousBlank(benchmark::State& state) {
     grain::EventData event_data{};
 
     const bool verbose = false;
+    grain_sim.set_verbose(verbose);
     for(auto _ : state) {
         for(int i=0; i<100; i++) {
-            grain_sim.update(event_data, verbose);
+            grain_sim.update(event_data);
         }
     }
 }

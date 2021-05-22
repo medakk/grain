@@ -7,6 +7,10 @@
 
 namespace grain{
 
+struct Stats {
+    double last_update_time{0.0};
+};
+
 class GrainSim {
 public:
     using ImageType = GPUImage<grain_t>;
@@ -14,11 +18,15 @@ public:
     explicit GrainSim(size_t N_, size_t speed_ = 1, std::string init_filename_ = "");
     ~GrainSim();
 
-    const grain_t* update(EventData& event_data, bool verbose=true);
+    const grain_t* update(EventData& event_data);
 
     // todo return the buffer as 4-channel image. should be removed after implemented in shader
     // return the buffer as 4-channel image
     void as_color_image(GPUImage<uint32_t>&) const;
+
+    Stats stats() const { return m_stats; }
+
+    void set_verbose(bool verbose) { m_verbose = verbose; }
 
     //////////////////////////////////
     // Disable copying and assignment
@@ -34,6 +42,8 @@ private:
     size_t m_frame_count{0};
     size_t m_brush_idx{1}; // index for the current user-selected brush
     std::string m_init_filename{};
+    Stats m_stats{};
+    bool m_verbose{false};
 
     uint32_t *m_color_map{nullptr};
 

@@ -38,6 +38,9 @@
 #include <streambuf>
 #include <chrono>
 #include <fmt/format.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl2.h>
 
 #include "grain_types.h"
 #include "gpu_image.h"
@@ -68,6 +71,14 @@ public:
         gladLoadGL(glfwGetProcAddress);
         glfwSwapInterval(1);
 
+        // Setup Imgui
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        ImGui::StyleColorsDark();
+        ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+        ImGui_ImplOpenGL2_Init();
+
         // During init, enable debug output
         glEnable(GL_DEBUG_OUTPUT);
         glDebugMessageCallback(gl_error_callback, nullptr);
@@ -82,25 +93,43 @@ public:
     }
 
     ~OpenGLRenderer() {
+        ImGui_ImplOpenGL2_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+
         // todo what else to clean up?
         glfwDestroyWindow(m_window);
         glfwTerminate();
     }
 
-    template<typename F>
-    void start(F compute_buffer_func, EventData& event_data, int w, int h, bool verbose=false) {
+    void start(GrainSim& grain_sim, EventData& event_data, int w, int h, bool verbose=false) {
         glfwSetWindowUserPointer(m_window, &event_data);
         glfwSetKeyCallback(m_window, keyboard_callback);
         glfwSetMouseButtonCallback(m_window, mouse_button_callback);
+
+        // todo really need to get the image to work for non-square lol.
+        assert(w == h);
+        grain::GPUImage<uint32_t> display_image(w);
 
         /////////////////////////////
         // Main loop
         while (!glfwWindowShouldClose(m_window)) {
             Timer timer;
 
+            glfwPollEvents();
+
             int window_width, window_height;
             glfwGetFramebufferSize(m_window, &window_width, &window_height);
 
+            // Start the Dear ImGui frame
+            ImGui_ImplOpenGL2_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+            // todo this may lag behind by one frame?
+            const auto stats = grain_sim.stats();
+            imgui_overlay(stats);
+
+            // get mouse position
             double xpos, ypos;
             glfwGetCursorPos(m_window, &xpos, &ypos);
             event_data.mouse_x = xpos / window_width;
@@ -108,17 +137,24 @@ public:
             event_data.mouse_x = std::clamp(event_data.mouse_x, 0.0f, 1.0f);
             event_data.mouse_y = std::clamp(event_data.mouse_y, 0.0f, 1.0f);
 
+            // Clear screen
+            ImGui::Render();
             glViewport(0, 0, window_width, window_height);
             glClear(GL_COLOR_BUFFER_BIT);
 
+            // Setup texture
             glBindTexture(GL_TEXTURE_2D, m_main_tex_id);
 
             //TODO use PBO so that cuda and opengl share memory
-            const auto data = compute_buffer_func();
+            grain_sim.update(event_data);
+            grain_sim.as_color_image(display_image);
+            const uint32_t* data = display_image.data();
+
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h,
                          0, GL_BGRA, GL_UNSIGNED_BYTE, data);
             glEnable(GL_TEXTURE_2D);
 
+            // Setup a full screen quad
             glBegin(GL_QUADS);
             glTexCoord2f(0, 1);
             glVertex2f(-1, -1);
@@ -132,11 +168,12 @@ public:
 
             glDisable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, 0);
-
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
+            // Draw ImGUI stuff
+            ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+
             glfwSwapBuffers(m_window);
-            glfwPollEvents();
 
             if(verbose) {
                 const double t = timer.elapsed();
@@ -149,6 +186,14 @@ public:
 private:
     GLFWwindow* m_window;
     uint m_main_tex_id;
+
+    void imgui_overlay(const grain::Stats& stats) {
+        ImGui::Begin("Stats");
+        const double sim_framerate = 1.0 / stats.last_update_time;
+        ImGui::Text("Render: %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text("Sim:    %.3f ms/frame (%.1f FPS)", 1000.0f / sim_framerate, sim_framerate);
+        ImGui::End();
+    }
 
     static constexpr struct {
         float x, y;
