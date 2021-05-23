@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     grain::OpenGLRenderer renderer(options.resolution, options.resolution);
 
     // create renderer and start update loop
-    renderer.start(grain_sim , event_data,
+    renderer.start(grain_sim, event_data,
                    options.resolution, options.resolution,
                    options.verbose);
 

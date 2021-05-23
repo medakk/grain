@@ -32,7 +32,7 @@ public:
         m_start = std::chrono::system_clock::now();
     }
 
-    double elapsed() {
+    double elapsed() const {
         const auto end = std::chrono::system_clock::now();
         return std::chrono::duration_cast<std::chrono::duration<double>>(end - m_start)
                 .count();
