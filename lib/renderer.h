@@ -195,33 +195,12 @@ private:
         ImGui::End();
     }
 
-    static constexpr struct {
-        float x, y;
-        float u, v;
-    } vertices[6] = {
-            {-1.0f, -1.0f, 0.f, 0.f,},
-            {1.0f,  -1.0f, 1.f, 0.f,},
-            {-1.f,  1.0f,  0.f, 1.f,},
-
-            {1.0f,  -1.0f, 1.f, 0.f,},
-            {1.0f,  1.0f,  1.f, 1.f,},
-            {-1.f,  1.0f,  0.f, 1.f,},
-    };
-
     static void print_usage() {
         std::cerr << "R:     Reset\n"
                   << "S:     Screenshot(overwrites screenshot.png in current dir)\n"
                   << "Q/E:   Previous/Next Brush\n"
                   << "Space: Toggle pause\n"
                   << "Esc:   Close\n";
-    }
-
-    static std::string load_text_file(const std::string &filename) {
-        std::ifstream file(filename);
-        assert(file.is_open());
-        std::string str((std::istreambuf_iterator<char>(file)),
-                        std::istreambuf_iterator<char>());
-        return str;
     }
 
     static void glfw_error_callback(int error, const char* description) {
@@ -236,29 +215,6 @@ private:
         fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
                 (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
                 type, severity, message);
-    }
-
-    static void check_shader(GLuint shader) {
-        GLint isCompiled = 0;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
-        if (isCompiled == GL_FALSE) {
-            GLint maxLength = 0;
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
-
-            // The maxLength includes the NULL character
-            std::vector<GLchar> errorLog(maxLength);
-            glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
-
-            for(auto ch : errorLog) {
-                std::cerr << ch;
-            }
-            std::cerr << '\n';
-
-            // Provide the infolog in whatever manor you deem best.
-            // Exit with failure.
-            glDeleteShader(shader); // Don't leak the shader.
-            throw std::runtime_error("Bad shader");
-        }
     }
 
     static void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
