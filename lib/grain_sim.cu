@@ -71,7 +71,9 @@ __device__ void gpu_update_lava(grain_t* buf, size_t n, size_t turn,
     bool done = false;
 
     // lava can destroy all the water/etc around it.
+#pragma unroll
     for(int dx=-1; dx<=1; dx++) {
+#pragma unroll
         for(int dy=-1; dy<=1; dy++) {
             const auto nx = x + dx;
             const auto ny = y + dy;
@@ -122,7 +124,9 @@ __global__ void gpu_slow_step(grain_t *buf, size_t n, grain_t turn) {
 __global__ void gpu_step(grain_t* buf, size_t n, grain_t turn, int bx, int by) {
     int sx = bx * THREAD_DIM + blockIdx.x * blockDim.x * THREAD_DIM * 2 + threadIdx.x * THREAD_DIM * 2;
     int sy = by * THREAD_DIM + blockIdx.y * blockDim.y * THREAD_DIM * 2 + threadIdx.y * THREAD_DIM * 2;
+#pragma unroll
     for(int dx=0; dx<THREAD_DIM; dx++) {
+#pragma unroll
         for(int dy=0; dy<THREAD_DIM; dy++) {
             auto x = sx + dx;
             auto y = sy + dy;
