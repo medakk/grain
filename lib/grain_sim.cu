@@ -174,6 +174,7 @@ __global__ void gpu_sprinkle(grain_t *out, size_t n, grain_t value,
 __global__ void gpu_as_color_image(const grain_t *in, size_t in_n,
                                    uint32_t *out, size_t out_n,
                                    const uint32_t *map) {
+    //todo use __constant__ memory for map
     auto out_x = blockIdx.x * blockDim.x + threadIdx.x;
     auto out_y = blockIdx.y * blockDim.y + threadIdx.y;
     if(out_x < out_n && out_y < out_n) {
