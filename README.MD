@@ -15,6 +15,7 @@ Install:
 
 ```bash
 git clone --recursive https://github.com/medakk/grain.git
+cd grain
 mkdir build
 cd build
 
