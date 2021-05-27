@@ -15,7 +15,7 @@ struct Options {
 };
 
 Options parse_args(int argc, char *argv[]) {
-    cxxopts::Options options("grain", "GPU accelerated falling sand simulation");
+    cxxopts::Options options("grain_bin", "GPU accelerated falling sand simulation");
     options.add_options()
             ("n,world-size", "size of world",
              cxxopts::value<int>()->default_value("256"))
