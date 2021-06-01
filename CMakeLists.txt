@@ -8,11 +8,10 @@ set(CMAKE_CXX_STANDARD 17)
 # Find CUDA
 find_package(CUDAToolkit REQUIRED)
 
-# Find fmt
+# Build fmt
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/fmt)
-find_package(fmt)
 
-# Find GLFW
+# Build GLFW
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -22,10 +21,10 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw)
 set(GRAIN_GLAD_INCLUDE_DIR deps/glfw/deps/)
 set(GRAIN_GLAD_SRC_FILES deps/glfw/deps/glad_gl.c)
 
-# Find imgui
+# Build imgui
 add_subdirectory(deps/imgui)
 
-# Find google benchmark
+# Build google benchmark if required
 if(GRAIN_BENCHMARK)
     option(BENCHMARK_ENABLE_GTEST_TESTS "" OFF)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/benchmark)
